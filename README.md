@@ -39,15 +39,27 @@ ignored issues that quietly burn community trust.
 
 ```bash
 # needs: gh (authenticated) + Node >= 22
-gh api --paginate --slurp '/repos/n8n-io/n8n/issues?state=open&per_page=100' > data/issues_raw.json
-gh api --paginate --slurp '/repos/n8n-io/n8n/pulls?state=open&per_page=100'  > data/pulls_raw.json
-node src/leverage.ts
+npm run fetch          # pull the live backlog into data/
+
+node src/leverage.ts    # v1 — keyword themes         -> REPORT.md
+node src/leverage_v2.ts # v2 — semantic clustering     -> REPORT_v2.md
 ```
 
-## Roadmap (v2)
+v2 needs a local [ollama](https://ollama.com) with `nomic-embed-text` pulled
+(`ollama pull nomic-embed-text`). Embeddings are cached to `data/embeddings.json`,
+so re-runs are instant. Tune cluster granularity with `THRESH=0.74 node src/leverage_v2.ts`.
 
-- **Semantic clustering** — replace keyword themes with embedding clusters (pgvector) for
-  true duplicate detection. ~39% of issues currently fall in "Other"; embeddings cut that.
+## v2 — semantic clustering (implemented)
+
+v1's keyword buckets left ~39% of issues in "Other". v2 embeds every issue locally
+with `nomic-embed-text` (no API key, no network egress — the vector store is
+in-process) and clusters by cosine similarity. Result: **427 issues collapse into
+139 themes with no "Other" bucket**, and issues that share no keywords but describe
+the same problem land in the same theme. Same normalized vectors drop into pgvector
+unchanged when this needs to scale.
+
+## Roadmap
+
 - **PR review depth** — join mergeability + CI status + linked-issue leverage so the review
   queue ranks by "closest to merge × highest impact."
 - **Contributor briefs** — auto-generate a scoped "good first issue" brief + code entry
@@ -57,5 +69,6 @@ node src/leverage.ts
 
 ## Honest limits
 
-v1 uses structural signals only (no NLP). Theme buckets are keyword/label heuristics.
-PR ranking uses engagement + recency, not yet mergeability. These are the v2 seams above.
+Signals are structural + embedding similarity; no per-issue LLM reasoning yet. PR ranking
+uses engagement + recency, not mergeability. Cluster names are salient-term heuristics.
+These are the roadmap seams above.

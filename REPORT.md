@@ -1,6 +1,6 @@
-# n8n Community Leverage Report
+# n8n Community Leverage Report (v1 — keyword themes)
 
-_Generated on a fixed 2026-07-07 clock over the live open backlog._
+_Fixed 2026-07-07 clock over the live open backlog._
 
 **Backlog:** 427 open issues · 1029 open PRs (821 community, review-ready)
 
@@ -109,8 +109,7 @@ _Non-draft, community-authored, ranked by leverage of the work._
 
 ---
 
-### Method (why this beats date-sorting and per-issue AI labels)
-- **Leverage, not recency:** `reach × severity × recency`. Reach = `1 + 2·ln(1+reactions) + ln(1+comments)` (log-compressed so one viral thread can't dominate). Severity from labels (bug 3.0 → docs 0.8). Recency decays over ~60 days.
-- **Themes over tickets:** duplicate reports are grouped so effort targets the fix that retires the most reports.
-- **Churn risk** is the deliberate inverse — it rewards neglect (old + popular + idle), catching what the leverage sort hides.
-- **v2 seam:** replace keyword themes with embedding clusters (pgvector) for true semantic dedup; join PR mergeability + linked-issue leverage for review ranking.
+### Method
+- **Leverage, not recency:** `reach × severity × recency` (see lib.ts).
+- **Themes over tickets:** keyword/label buckets — fast but leaves an "Other" bucket. v2 replaces this with embedding clusters.
+- **Churn risk** rewards neglect (old + popular + idle), catching what the leverage sort hides.
