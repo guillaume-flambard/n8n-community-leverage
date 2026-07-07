@@ -43,6 +43,7 @@ npm run fetch          # pull the live backlog into data/
 
 node src/leverage.ts    # v1 — keyword themes         -> REPORT.md
 node src/leverage_v2.ts # v2 — semantic clustering     -> REPORT_v2.md
+node src/briefs.ts      # contributor briefs (local LLM) -> BRIEFS.md
 ```
 
 v2 needs a local [ollama](https://ollama.com) with `nomic-embed-text` pulled
@@ -58,12 +59,19 @@ in-process) and clusters by cosine similarity. Result: **427 issues collapse int
 the same problem land in the same theme. Same normalized vectors drop into pgvector
 unchanged when this needs to scale.
 
+## Contributor briefs (implemented)
+
+`briefs.ts` takes the top semantic themes and has a local LLM (llama3.2 / qwen via
+ollama) draft a scoped **contributor brief** per theme — problem synthesis, likely
+area, suggested approach, scope, and good-first-issue call — landing in
+[BRIEFS.md](BRIEFS.md). Themes I have mapped by hand (e.g. MCP) also carry verified
+code entry points. This is the point of the tool: it does not just rank the backlog,
+it turns the top of it into contributable work. Briefs are labelled as hypotheses.
+
 ## Roadmap
 
 - **PR review depth** — join mergeability + CI status + linked-issue leverage so the review
   queue ranks by "closest to merge × highest impact."
-- **Contributor briefs** — auto-generate a scoped "good first issue" brief + code entry
-  points for each top theme, converting backlog into community contributions.
 - **Ship as an n8n workflow** — Schedule → GitHub nodes → AI/LangChain embedding → pgvector
   → report, dogfooding the product it triages.
 
