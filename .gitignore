@@ -1,0 +1,3 @@
+data/*.json
+data/*.log
+node_modules/
