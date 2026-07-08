@@ -9,7 +9,7 @@
         "width": 480,
         "color": 4
       },
-      "id": "93928648-017b-4b63-9aa1-f31f76f6d73c",
+      "id": "17b6acad-9862-4646-8d97-f54b28577250",
       "name": "About",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
@@ -22,7 +22,7 @@
       "parameters": {
         "options": {}
       },
-      "id": "bafffedf-528b-4b61-963f-61b25c394372",
+      "id": "5c344a28-374e-4eba-a5a8-17eab171c1c7",
       "name": "Chat Trigger",
       "type": "@n8n/n8n-nodes-langchain.chatTrigger",
       "typeVersion": 1.1,
@@ -38,7 +38,7 @@
           "systemMessage": "You are the n8n Community Leverage Copilot \u2014 an assistant for maintainers and contributors triaging the n8n-io/n8n open backlog.\n\nYou have tools:\n1. **issue_search** \u2014 semantic search across ~440 open issues + top community PRs.\n2. **top_ranking** \u2014 live top-25 issues by leverage (daily 08:00 Europe/Paris).\n3. **top_prs** \u2014 top community PRs to review first.\n4. **fetch_comments** \u2014 read the comment thread on a specific issue (pass issue number).\n5. **issue_deep_dive** \u2014 synthesize thread + propose contributor approach (pass issue number).\n6. **issue_pr_linker** \u2014 find open PRs mentioning an issue (pass issue number).\n7. **code_scout** \u2014 search n8n-io/n8n codebase for file paths (read-only, pass search terms).\n\nWhen answering:\n- Cite GitHub issue/PR numbers and URLs (/issues/ vs /pull/).\n- Mention leverage when relevant.\n- For contributor questions, use issue_deep_dive on the top issue.\n- Top pain theme: **AI Agent / tool / memory** (e.g. #14361).\n- Be concise. Bullet points for lists.\n\nIf vector index was cleared, tell user to run \"Leverage \u2014 index bootstrap\" once."
         }
       },
-      "id": "55abee6c-61f3-452d-a23a-06a0bbafdf5b",
+      "id": "71110a46-cd6b-479b-acc1-c5e9082bb2c0",
       "name": "AI Agent",
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 1.3,
@@ -52,7 +52,7 @@
         "sessionKey": "={{ $json.sessionId }}",
         "contextWindowLength": 8
       },
-      "id": "ec2751d5-1670-485e-a536-cdf39efd65b6",
+      "id": "01acc26e-1242-42dd-bb8d-cdd352191643",
       "name": "Simple Memory",
       "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
       "typeVersion": 1.3,
@@ -68,7 +68,7 @@
           "temperature": 0.2
         }
       },
-      "id": "4a20440a-21db-4333-9a01-0f3fb44bd329",
+      "id": "63228475-ed58-43c4-bf16-1cf4a23054f6",
       "name": "Ollama Chat Model",
       "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
       "typeVersion": 1,
@@ -88,7 +88,7 @@
         "model": "nomic-embed-text:latest",
         "options": {}
       },
-      "id": "bd519aaf-80c6-498e-a039-d95afbfbe560",
+      "id": "d0b9cbcb-a864-4455-84d6-f74f912f047c",
       "name": "Embeddings Ollama",
       "type": "@n8n/n8n-nodes-langchain.embeddingsOllama",
       "typeVersion": 1,
@@ -115,7 +115,7 @@
         },
         "topK": 8
       },
-      "id": "da108de1-292f-4197-97a7-1b84d196f187",
+      "id": "0708e594-0db8-47c4-81cf-cd157d1442e5",
       "name": "Issue search",
       "type": "@n8n/n8n-nodes-langchain.vectorStoreInMemory",
       "typeVersion": 1.2,
@@ -134,7 +134,7 @@
           "value": "s2bX3oDLRPUamt0M"
         }
       },
-      "id": "d264772f-44dc-43f6-8014-77c32baa8eed",
+      "id": "faaf8ff9-1b13-4378-b800-7ad2f851c8e7",
       "name": "Top Ranking",
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2,
@@ -153,7 +153,7 @@
           "value": "ErItT8BHutyTa0rf"
         }
       },
-      "id": "6d30a8c9-d674-4f74-ae96-8d23d8db7f5a",
+      "id": "fdae41bb-2ecf-4ab2-8f51-bbbd65f8b9d5",
       "name": "Top Prs",
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2,
@@ -172,7 +172,7 @@
           "value": "8vGd2e5vuyAi0u0V"
         }
       },
-      "id": "8b351932-a4f1-42fd-a0c1-6ff4c4ddadc9",
+      "id": "23e67a29-705e-462f-9871-d3ce47d698d1",
       "name": "Fetch Comments",
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2,
@@ -191,7 +191,7 @@
           "value": "KjC9Bq8HnsxwyRpg"
         }
       },
-      "id": "5639a774-3ded-4812-b2fe-89669c597feb",
+      "id": "f2f7de89-1ca9-4815-a27f-edc9d02b8243",
       "name": "Issue Deep Dive",
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2,
@@ -210,7 +210,7 @@
           "value": "wzKasDRdfp8VgUI7"
         }
       },
-      "id": "945d9adb-c1b4-4cc6-8c47-a0f92830f758",
+      "id": "6ae91726-3d4a-41d1-84d1-5cfb36e4d62e",
       "name": "Issue Pr Linker",
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2,
@@ -229,7 +229,7 @@
           "value": "hnt00MJVcSNedoZf"
         }
       },
-      "id": "b6fee466-9e3f-430a-8fd1-1545e716f54e",
+      "id": "c078e70b-cc47-4634-8872-938730202ea2",
       "name": "Code Scout",
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2,
@@ -365,6 +365,7 @@
   "settings": {
     "executionOrder": "v1",
     "timezone": "Europe/Paris",
-    "errorWorkflow": "G8zsc6ebrw5ZZBiz"
+    "errorWorkflow": "G8zsc6ebrw5ZZBiz",
+    "binaryMode": "separate"
   }
 }

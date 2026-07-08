@@ -4,7 +4,7 @@
   "nodes": [
     {
       "parameters": {},
-      "id": "deb39af0-a4b7-4778-94fd-b07eaa0ff748",
+      "id": "189c94b1-b02c-4e8c-b5ac-6e9db8042731",
       "name": "Manual Trigger",
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
@@ -20,7 +20,7 @@
         "width": 400,
         "color": 3
       },
-      "id": "3b1318cf-25b0-4e5e-8faf-59e301044000",
+      "id": "5dc3fe3f-9f3b-4fab-b111-ffd100ee09bc",
       "name": "About",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
@@ -35,7 +35,7 @@
         "fileSelector": "/home/node/.n8n-files/leverage_docs.json",
         "options": {}
       },
-      "id": "316b9763-710c-4361-9902-49b91bf6710f",
+      "id": "5a6bd83a-f78e-4b14-be09-279d1ce950d5",
       "name": "Read documents file",
       "type": "n8n-nodes-base.readWriteFile",
       "typeVersion": 1,
@@ -48,7 +48,7 @@
       "parameters": {
         "jsCode": "const item = $input.first();\nconst binKey = Object.keys(item.binary || {})[0] || 'data';\nconst buffer = await this.helpers.getBinaryDataBuffer(0, binKey);\nconst docs = JSON.parse(buffer.toString('utf8'));\nreturn docs.map((d) => ({ json: { text: d.pageContent, metadata: d.metadata } }));"
       },
-      "id": "2a62565f-7636-4ef6-9ba6-2d456ce6df18",
+      "id": "84a8e1e8-9eaf-42af-98a1-4ea2d94f6a07",
       "name": "Parse documents",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -62,7 +62,7 @@
         "model": "nomic-embed-text:latest",
         "options": {}
       },
-      "id": "cac44a22-3928-4057-aab4-88ffceec39e8",
+      "id": "cb7886d0-e938-4294-90c0-2d663fb5384f",
       "name": "Embeddings Ollama",
       "type": "@n8n/n8n-nodes-langchain.embeddingsOllama",
       "typeVersion": 1,
@@ -84,7 +84,7 @@
         "textSplittingMode": "simple",
         "options": {}
       },
-      "id": "de8f70f4-5cfb-407a-b89f-74ba66f27c47",
+      "id": "3be4904a-39cc-433f-96a7-b7c015303b22",
       "name": "Default Data Loader",
       "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
       "typeVersion": 1.1,
@@ -103,7 +103,7 @@
         },
         "clearStore": true
       },
-      "id": "f2b454ee-8718-41d3-a7f3-90b99a00df89",
+      "id": "cce45e11-eaee-4b6c-9ae3-b93ad4749870",
       "name": "Issue Vector Store",
       "type": "@n8n/n8n-nodes-langchain.vectorStoreInMemory",
       "typeVersion": 1.2,

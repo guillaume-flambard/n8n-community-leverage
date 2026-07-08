@@ -4,7 +4,7 @@
   "nodes": [
     {
       "parameters": {},
-      "id": "a750ffc1-0dd4-4aa0-a802-0b7b5157b86e",
+      "id": "f1195915-8560-45bf-85b7-207ac6587a0b",
       "name": "Execute Workflow Trigger",
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1,
@@ -15,9 +15,9 @@
     },
     {
       "parameters": {
-        "jsCode": "const raw = $input.first().json;\nconst text = String(raw.query ?? raw.chatInput ?? raw.issue_number ?? raw.input ?? '').trim();\nconst m = text.match(/#?(\\d{3,6})/);\nif (!m) {\n  return [{ json: { response: 'Provide an issue number (e.g. 14361 or #14361).' } }];\n}\nreturn [{ json: { issueNumber: parseInt(m[1], 10) } }];"
+        "jsCode": "const raw = $input.first().json;\nconst text = String(raw.query ?? raw.chatInput ?? raw.issue_number ?? raw.input ?? '').trim();\nconst m = text.match(/#?(\\d{3,6})/);\nif (!m) {\n  return [{ json: { issueNumber: null, response: 'Provide an issue number (e.g. 14361 or #14361).' } }];\n}\nreturn [{ json: { issueNumber: parseInt(m[1], 10) } }];"
       },
-      "id": "ecc2dfe9-14cb-4660-a3b9-e861ece8e88e",
+      "id": "ba1dfe8c-fb20-40c8-84c0-292795eb9fad",
       "name": "Parse input",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -28,51 +28,14 @@
     },
     {
       "parameters": {
-        "resource": "issue",
-        "operation": "getComments",
-        "owner": {
-          "__rl": true,
-          "mode": "name",
-          "value": "n8n-io",
-          "cachedResultName": "n8n-io"
-        },
-        "repository": {
-          "__rl": true,
-          "mode": "name",
-          "value": "n8n",
-          "cachedResultName": "n8n"
-        },
-        "issueNumber": "={{ $json.issueNumber }}",
-        "returnAll": true
+        "jsCode": "const parsed = $('Parse input').first().json;\nif (!parsed.issueNumber) {\n  return [{ json: { response: parsed.response } }];\n}\nconst issueNumber = parsed.issueNumber;\nconst raw = await this.helpers.httpRequestWithAuthentication.call(this, 'githubApi', {\n  method: 'GET',\n  url: `https://api.github.com/repos/n8n-io/n8n/issues/${issueNumber}/comments?per_page=100`,\n  json: true,\n});\nconst skip = new Set(['dependabot[bot]', 'n8n-io[bot]', 'github-actions[bot]']);\nconst comments = (Array.isArray(raw) ? raw : []).filter((c) => c.body && !skip.has(c.user?.login)).slice(0, 30);\nif (!comments.length) {\n  return [{ json: { response: `No comments found for #${issueNumber}.` } }];\n}\nconst lines = comments.map((c) => {\n  const who = c.user?.login ?? 'unknown';\n  const assoc = c.author_association ?? '';\n  const body = (c.body ?? '').replace(/\\s+/g, ' ').slice(0, 600);\n  return `**@${who}** (${assoc}): ${body}`;\n});\nreturn [{\n  json: {\n    response: `# Comments on #${issueNumber} (${comments.length} shown, newest last)\\n\\n${lines.join('\\n\\n')}`,\n  },\n}];"
       },
-      "id": "60ef7388-ea1d-4f12-bf6d-8a3c8c17e744",
-      "name": "Get comments",
-      "type": "n8n-nodes-base.github",
-      "typeVersion": 1.1,
-      "position": [
-        420,
-        0
-      ],
-      "credentials": {
-        "githubApi": {
-          "id": "myYgWBVQwd4sro7Q",
-          "name": "GitHub (guillaume-flambard)"
-        }
-      },
-      "retryOnFail": true,
-      "maxTries": 3,
-      "webhookId": "9f7c2560-906b-4a4e-9773-d5d6e29ee16b"
-    },
-    {
-      "parameters": {
-        "jsCode": "const issueNumber = $('Parse input').first().json.issueNumber;\nconst skip = new Set(['dependabot[bot]', 'n8n-io[bot]', 'github-actions[bot]']);\nconst comments = $input.all()\n  .map((i) => i.json)\n  .filter((c) => c.body && !skip.has(c.user?.login))\n  .slice(0, 30);\nif (!comments.length) {\n  return [{ json: { response: `No comments found for #${issueNumber}.` } }];\n}\nconst lines = comments.map((c) => {\n  const who = c.user?.login ?? 'unknown';\n  const assoc = c.author_association ?? '';\n  const body = (c.body ?? '').replace(/\\s+/g, ' ').slice(0, 600);\n  return `**@${who}** (${assoc}): ${body}`;\n});\nreturn [{\n  json: {\n    response: `# Comments on #${issueNumber} (${comments.length} shown, newest last)\\n\\n${lines.join('\\n\\n')}`,\n  },\n}];"
-      },
-      "id": "b56c671e-766b-4ae8-8185-8536f55b1069",
-      "name": "Format comments",
+      "id": "d096206e-451d-4033-a0db-6a6c57a29136",
+      "name": "Fetch comments",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        640,
+        420,
         0
       ]
     }
@@ -93,18 +56,7 @@
       "main": [
         [
           {
-            "node": "Get comments",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Get comments": {
-      "main": [
-        [
-          {
-            "node": "Format comments",
+            "node": "Fetch comments",
             "type": "main",
             "index": 0
           }

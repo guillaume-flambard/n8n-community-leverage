@@ -4,7 +4,7 @@
   "nodes": [
     {
       "parameters": {},
-      "id": "113c898e-c676-4210-931f-2218b8933afd",
+      "id": "bf7d1151-f9e7-4706-82bb-d8c8fa292754",
       "name": "Execute Workflow Trigger",
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1,
@@ -25,7 +25,7 @@
         },
         "returnAll": true
       },
-      "id": "20d3e053-b9dc-4dea-bd99-66f4d45386fa",
+      "id": "e3884d85-1035-4d74-b9df-92b1d73372b6",
       "name": "Get PR rows",
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
@@ -38,7 +38,7 @@
       "parameters": {
         "jsCode": "const rows = $input.all().map((i) => i.json);\nrows.sort((a, b) => (b.leverage ?? 0) - (a.leverage ?? 0));\nconst top = rows.slice(0, 15);\nconst md = top\n  .map((r) => `\u2022 [PR] #${r.number} (leverage ${r.leverage}, \ud83d\udcac${r.comments}, @${r.author || 'unknown'})\\n  ${r.title}\\n  ${r.url}`)\n  .join('\\n\\n');\nreturn [{ json: { response: `Top ${top.length} community PRs to review:\\n\\n${md}` } }];"
       },
-      "id": "1386fea2-f988-4afe-a86c-a0b03201acb9",
+      "id": "9d9d06be-fcd4-420d-b722-5baf38c1cf40",
       "name": "Format PRs",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,

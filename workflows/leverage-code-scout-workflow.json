@@ -4,7 +4,7 @@
   "nodes": [
     {
       "parameters": {},
-      "id": "33356d27-21f8-4a86-a8fb-46e04301a451",
+      "id": "55a946d7-3638-43a6-aa9f-fc4662e04a53",
       "name": "Execute Workflow Trigger",
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1,
@@ -15,9 +15,9 @@
     },
     {
       "parameters": {
-        "jsCode": "const raw = $input.first().json;\nconst text = String(raw.query ?? raw.chatInput ?? raw.search ?? '').trim();\nif (!text || text.length < 3) {\n  return [{ json: { response: 'Provide a search term (e.g. McpTrigger or AI Agent memory).' } }];\n}\nreturn [{ json: { search: text.slice(0, 120) } }];"
+        "jsCode": "const raw = $input.first().json;\nconst text = String(raw.query ?? raw.chatInput ?? raw.search ?? '').trim();\nif (!text || text.length < 3) {\n  return [{ json: { search: null, response: 'Provide a search term (e.g. McpTrigger or AI Agent memory).' } }];\n}\nreturn [{ json: { search: text.slice(0, 120) } }];"
       },
-      "id": "5c74e33a-0230-41fb-8d61-794c7211e04f",
+      "id": "4eb6f1f8-cb97-42dc-a9ee-52dde487a35b",
       "name": "Parse search",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -28,38 +28,14 @@
     },
     {
       "parameters": {
-        "resource": "repository",
-        "operation": "searchCode",
-        "query": "={{ 'repo:n8n-io/n8n ' + $json.search }}",
-        "returnAll": false,
-        "limit": 10
+        "jsCode": "const parsed = $('Parse search').first().json;\nif (!parsed.search) {\n  return [{ json: { response: parsed.response || 'Provide a search term (e.g. McpTrigger).' } }];\n}\nconst search = parsed.search;\nconst q = `repo:n8n-io/n8n ${search}`;\nconst res = await this.helpers.httpRequestWithAuthentication.call(this, 'githubApi', {\n  method: 'GET',\n  url: `https://api.github.com/search/code?q=${encodeURIComponent(q)}&per_page=10`,\n  json: true,\n});\nconst items = (res.items || []).filter((x) => x.path);\nif (!items.length) {\n  return [{ json: { response: `No code matches for \"${search}\" in n8n-io/n8n.` } }];\n}\nconst md = items.slice(0, 8).map((f) => {\n  const url = f.html_url || `https://github.com/n8n-io/n8n/blob/master/${f.path}`;\n  return `\u2022 ${f.path} \u2014 ${url}`;\n}).join('\\n');\nreturn [{\n  json: {\n    response: `Code scout (read-only) for \"${search}\" in n8n-io/n8n:\\n\\n${md}\\n\\n_Use these paths as hypotheses \u2014 verify before patching._`,\n  },\n}];"
       },
-      "id": "d2aeebda-7ad2-478a-ad76-73c8f652e7a3",
+      "id": "9866fd12-9030-4597-b052-3c0c639c850c",
       "name": "Search code",
-      "type": "n8n-nodes-base.github",
-      "typeVersion": 1.1,
-      "position": [
-        420,
-        0
-      ],
-      "credentials": {
-        "githubApi": {
-          "id": "myYgWBVQwd4sro7Q",
-          "name": "GitHub (guillaume-flambard)"
-        }
-      },
-      "webhookId": "7d8d27f5-0570-4590-b1d5-d4e218b0c9f3"
-    },
-    {
-      "parameters": {
-        "jsCode": "const search = $('Parse search').first().json.search;\nconst items = $input.all().map((i) => i.json).filter((x) => x.path);\nif (!items.length) {\n  return [{ json: { response: `No code matches for \"${search}\" in n8n-io/n8n.` } }];\n}\nconst md = items.slice(0, 8).map((f) => {\n  const url = f.html_url || `https://github.com/n8n-io/n8n/blob/master/${f.path}`;\n  return `\u2022 ${f.path} \u2014 ${url}`;\n}).join('\\n');\nreturn [{\n  json: {\n    response: `Code scout (read-only) for \"${search}\" in n8n-io/n8n:\\n\\n${md}\\n\\n_Use these paths as hypotheses \u2014 verify before patching._`,\n  },\n}];"
-      },
-      "id": "bef5332b-1cf6-499a-8cd3-b92f76c30b2d",
-      "name": "Format paths",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        640,
+        420,
         0
       ]
     }
@@ -81,17 +57,6 @@
         [
           {
             "node": "Search code",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Search code": {
-      "main": [
-        [
-          {
-            "node": "Format paths",
             "type": "main",
             "index": 0
           }
