@@ -78,25 +78,29 @@ it turns the top of it into contributable work. Briefs are labelled as hypothese
 
 | Workflow | File | Role |
 |----------|------|------|
-| Daily ranking | [`workflows/leverage-workflow.json`](workflows/leverage-workflow.json) | Schedule → GitHub → leverage → Data Table |
-| Chat copilot | [`workflows/leverage-copilot-workflow.json`](workflows/leverage-copilot-workflow.json) | Chat → AI Agent → vector search + top-25 tool |
-| Index bootstrap | [`workflows/leverage-bootstrap-workflow.json`](workflows/leverage-bootstrap-workflow.json) | Load 427 issues into Simple Vector Store (run after restart) |
+| Daily ranking | [`workflows/leverage-workflow.json`](workflows/leverage-workflow.json) | Schedule → GitHub issues + PRs → Data Tables |
+| Chat copilot | [`workflows/leverage-copilot-workflow.json`](workflows/leverage-copilot-workflow.json) | Chat → AI Agent → 7 tools (search, ranking, comments, deep-dive, linker, code scout) |
+| Index bootstrap | [`workflows/leverage-bootstrap-workflow.json`](workflows/leverage-bootstrap-workflow.json) | Load 442 docs (issues + top PRs) into vector store |
+| Fetch comments | [`workflows/leverage-fetch-comments-workflow.json`](workflows/leverage-fetch-comments-workflow.json) | GitHub comment thread on demand |
+| Issue deep dive | [`workflows/leverage-deep-dive-workflow.json`](workflows/leverage-deep-dive-workflow.json) | Thread synthesis + contributor proposal (local LLM) |
+| Issue PR linker | [`workflows/leverage-issue-linker-workflow.json`](workflows/leverage-issue-linker-workflow.json) | Find open PRs mentioning an issue |
+| Code scout | [`workflows/leverage-code-scout-workflow.json`](workflows/leverage-code-scout-workflow.json) | Read-only codebase path search via GitHub API |
 
 `export_vector_docs.ts` bridges cached [`data/embeddings.json`](data/embeddings.json) +
-issue text into `data/vector_documents.json` for the n8n vector store — no re-fetch,
-no re-embed locally.
+issue/PR text into `data/vector_documents.json` for the n8n vector store — no re-fetch,
+no re-embed locally. PR URLs use `/pull/`; issues use `/issues/` (`ghUrl` in lib.ts).
 
 Demo script: [DEMO.md](DEMO.md)
 
 ## Roadmap
 
-- **PR review depth** — join mergeability + CI status + linked-issue leverage so the review
-  queue ranks by "closest to merge × highest impact."
+- ~~**PR review depth (phase 1)**~~ — daily top-15 community PRs + `leverage_prs` table + linker tool shipped.
+- **PR mergeability** — join CI status + review state so the queue ranks by "closest to merge × impact."
 - ~~**Ship as an n8n workflow**~~ — daily ranking + chat copilot shipped (see above).
 - **pgvector at scale** — promote embeddings cache to Postgres when backlog grows.
 
 ## Honest limits
 
-Signals are structural + embedding similarity; no per-issue LLM reasoning yet. PR ranking
-uses engagement + recency, not mergeability. Cluster names are salient-term heuristics.
-These are the roadmap seams above.
+Clustering is structural + embedding similarity; per-issue LLM reasoning runs on-demand via deep-dive,
+not batch. PR ranking uses engagement + recency, not mergeability yet. Code scout returns paths as
+hypotheses — human review before patching (see PR #33785 for real contributions).

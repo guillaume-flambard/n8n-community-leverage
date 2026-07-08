@@ -1,0 +1,165 @@
+{
+  "id": "KjC9Bq8HnsxwyRpg",
+  "name": "Leverage \u2014 issue deep dive tool",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "cf3d3d00-652c-4743-8a86-2a4937ec2c5a",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json;\nconst text = String(raw.query ?? raw.chatInput ?? raw.issue_number ?? raw.input ?? '').trim();\nconst m = text.match(/#?(\\d{3,6})/);\nif (!m) {\n  return [{ json: { response: 'Provide an issue number (e.g. 14361 or #14361).' } }];\n}\nreturn [{ json: { issueNumber: parseInt(m[1], 10) } }];"
+      },
+      "id": "c185b693-2bdc-4e6d-9958-0977f9e4a674",
+      "name": "Parse input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "issue",
+        "operation": "get",
+        "owner": {
+          "__rl": true,
+          "mode": "name",
+          "value": "n8n-io",
+          "cachedResultName": "n8n-io"
+        },
+        "repository": {
+          "__rl": true,
+          "mode": "name",
+          "value": "n8n",
+          "cachedResultName": "n8n"
+        },
+        "issueNumber": "={{ $json.issueNumber }}"
+      },
+      "id": "ee212edc-8b26-4afb-adaf-93b679ae4bc9",
+      "name": "Get issue",
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        400,
+        -80
+      ],
+      "credentials": {
+        "githubApi": {
+          "id": "myYgWBVQwd4sro7Q",
+          "name": "GitHub (guillaume-flambard)"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "webhookId": "70dc80d8-21c5-451b-ad44-5c9832398637"
+    },
+    {
+      "parameters": {
+        "resource": "issue",
+        "operation": "getComments",
+        "owner": {
+          "__rl": true,
+          "mode": "name",
+          "value": "n8n-io",
+          "cachedResultName": "n8n-io"
+        },
+        "repository": {
+          "__rl": true,
+          "mode": "name",
+          "value": "n8n",
+          "cachedResultName": "n8n"
+        },
+        "issueNumber": "={{ $('Parse input').first().json.issueNumber }}",
+        "returnAll": true
+      },
+      "id": "4eeb8b7d-2dbb-406c-a8b3-0ba50fbae57e",
+      "name": "Get comments",
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        600,
+        0
+      ],
+      "credentials": {
+        "githubApi": {
+          "id": "myYgWBVQwd4sro7Q",
+          "name": "GitHub (guillaume-flambard)"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "webhookId": "d05806b8-5398-4475-9f7e-3e57c5b2b53f"
+    },
+    {
+      "parameters": {
+        "jsCode": "const issueNumber = $('Parse input').first().json.issueNumber;\nconst issue = $('Get issue').first().json;\nconst skip = new Set(['dependabot[bot]', 'n8n-io[bot]', 'github-actions[bot]']);\nconst comments = $('Get comments').all()\n  .map((i) => i.json)\n  .filter((c) => c.body && !skip.has(c.user?.login))\n  .slice(0, 30);\nconst thread = comments.map((c) =>\n  `@${c.user?.login} (${c.author_association}): ${(c.body || '').replace(/\\s+/g, ' ').slice(0, 500)}`\n).join('\\n');\nconst labels = (issue.labels || []).map((l) => l.name).join(', ');\nconst mcpHint = /\\bmcp\\b/i.test((issue.title || '') + (issue.body || ''))\n  ? 'Verified MCP entry points: packages/@n8n/nodes-langchain/nodes/mcp/McpTrigger/McpTrigger.node.ts and McpServer.ts. Compare Webhook.node.ts for request metadata exposure.'\n  : '';\nconst synthPrompt = `You are a senior n8n maintainer. Summarize this GitHub issue thread for a contributor.\n\nIssue #${issueNumber}: ${issue.title}\nLabels: ${labels}\nBody: ${(issue.body || '').slice(0, 800)}\n\nComments (${comments.length}):\n${thread}\n\nWrite Markdown with EXACTLY:\n## Thread summary\n## Maintainer signals\n\nBe factual. Under 200 words.`;\nconst synth = await this.helpers.httpRequest({\n  method: 'POST',\n  url: 'http://10.0.0.4:11434/api/generate',\n  body: { model: 'llama3.2:3b', prompt: synthPrompt, stream: false, options: { temperature: 0.2, num_ctx: 8192 } },\n  json: true,\n});\nconst proposePrompt = `Based on this issue synthesis, propose a contributor approach for n8n (Node.js/TypeScript workflow automation).\n\n${synth.response}\n${mcpHint ? '\\nKnown code entry points:\\n' + mcpHint : ''}\n\nWrite Markdown with EXACTLY:\n## Proposed approach\n## Scope (S/M/L)\n## Good first issue (yes/no)\n## Risks\n\nHypotheses only \u2014 admit uncertainty. Under 200 words.`;\nconst prop = await this.helpers.httpRequest({\n  method: 'POST',\n  url: 'http://10.0.0.4:11434/api/generate',\n  body: { model: 'llama3.2:3b', prompt: proposePrompt, stream: false, options: { temperature: 0.2, num_ctx: 8192 } },\n  json: true,\n});\nconst url = issue.html_url || `https://github.com/n8n-io/n8n/issues/${issueNumber}`;\nreturn [{\n  json: {\n    response: `# Deep dive #${issueNumber}\\n\\n${url}\\n\\n${synth.response}\\n\\n---\\n\\n${prop.response}`,\n  },\n}];"
+      },
+      "id": "1f89d9d3-8ce3-4cfd-b908-abfdb627b4f6",
+      "name": "Synthesize and propose",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        820,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "Parse input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse input": {
+      "main": [
+        [
+          {
+            "node": "Get issue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get issue": {
+      "main": [
+        [
+          {
+            "node": "Get comments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get comments": {
+      "main": [
+        [
+          {
+            "node": "Synthesize and propose",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

@@ -1,0 +1,105 @@
+{
+  "id": "wzKasDRdfp8VgUI7",
+  "name": "Leverage \u2014 issue PR linker tool",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "b04bb048-79f3-45c2-8c99-fcfc5408bb16",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json;\nconst text = String(raw.query ?? raw.chatInput ?? raw.issue_number ?? raw.input ?? '').trim();\nconst m = text.match(/#?(\\d{3,6})/);\nif (!m) {\n  return [{ json: { response: 'Provide an issue number (e.g. 14361 or #14361).' } }];\n}\nreturn [{ json: { issueNumber: parseInt(m[1], 10) } }];"
+      },
+      "id": "f2af671e-9400-49de-a383-eb23fd2b0b2e",
+      "name": "Parse input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "repository",
+        "operation": "searchIssues",
+        "query": "={{ 'repo:n8n-io/n8n type:pr ' + $json.issueNumber + ' in:body' }}",
+        "returnAll": false,
+        "limit": 15
+      },
+      "id": "a529339b-e0e5-43d0-b900-53439de4311a",
+      "name": "Search linked PRs",
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        420,
+        0
+      ],
+      "credentials": {
+        "githubApi": {
+          "id": "myYgWBVQwd4sro7Q",
+          "name": "GitHub (guillaume-flambard)"
+        }
+      },
+      "webhookId": "388869ab-7f63-40cc-9528-cd083d94a20c"
+    },
+    {
+      "parameters": {
+        "jsCode": "const issueNumber = $('Parse input').first().json.issueNumber;\nconst items = $input.all().map((i) => i.json).filter((x) => x.number);\nif (!items.length) {\n  return [{ json: { response: `No open PRs found linking to #${issueNumber}. Try searching manually on GitHub.` } }];\n}\nconst md = items.slice(0, 10).map((p) => {\n  const url = p.html_url || `https://github.com/n8n-io/n8n/pull/${p.number}`;\n  const state = p.state || 'open';\n  return `\u2022 [#${p.number}](${url}) ${state} \u2014 ${p.title}\\n  by @${p.user?.login ?? 'unknown'}`;\n}).join('\\n\\n');\nreturn [{ json: { response: `Open PRs potentially linked to #${issueNumber}:\\n\\n${md}` } }];"
+      },
+      "id": "3a65c65b-f284-4ccd-ba7c-1b6cd188f7dd",
+      "name": "Format links",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        640,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "Parse input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse input": {
+      "main": [
+        [
+          {
+            "node": "Search linked PRs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search linked PRs": {
+      "main": [
+        [
+          {
+            "node": "Format links",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

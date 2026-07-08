@@ -98,7 +98,7 @@ md += `\n## 4. Community PRs to review first\n\n`;
 md += `_Non-draft, community-authored, ranked by leverage of the work._\n\n`;
 md += `| lev | 💬 | idle(d) | #/title |\n|---:|---:|---:|---|\n`;
 reviewPRs.forEach((p) => {
-  md += `| ${p.leverage} | ${p.comments} | ${p.idleDays} | [#${p.number}](${gh(p.number)}) ${p.title} |\n`;
+  md += `| ${p.leverage} | ${p.comments} | ${p.idleDays} | [#${p.number}](${gh(p.number, 'pr')}) ${p.title} |\n`;
 });
 
 md += `\n---\n\n### Method\n`;

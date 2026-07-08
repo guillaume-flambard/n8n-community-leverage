@@ -4,25 +4,25 @@
   "nodes": [
     {
       "parameters": {
-        "content": "## Leverage Copilot\n\nChat with the **live n8n community backlog**. Uses Simple Vector Store (427 issues) + daily top-25 ranking Data Table.\n\n**Demo questions:**\n- Why is #14361 ranked first?\n- What MCP issues hurt most?\n- Suggest a good-first-issue on AI Agent memory.",
-        "height": 220,
-        "width": 460,
+        "content": "## Leverage Copilot\n\nChat with the **live n8n backlog**. Vector search (issues + PRs) + ranking tables + **comment deep-dive**.\n\n**Demo:**\n- Why is #14361 ranked first?\n- Deep dive #14361 \u2014 what are maintainers saying?\n- What MCP issues hurt most?\n- code_scout: McpTrigger",
+        "height": 260,
+        "width": 480,
         "color": 4
       },
-      "id": "78e72438-fdea-4fab-a994-43e75ea419bd",
+      "id": "93928648-017b-4b63-9aa1-f31f76f6d73c",
       "name": "About",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
         340,
-        -240
+        -300
       ]
     },
     {
       "parameters": {
         "options": {}
       },
-      "id": "4535adf0-1eb0-4e69-91d1-1465848be39f",
+      "id": "bafffedf-528b-4b61-963f-61b25c394372",
       "name": "Chat Trigger",
       "type": "@n8n/n8n-nodes-langchain.chatTrigger",
       "typeVersion": 1.1,
@@ -35,10 +35,10 @@
     {
       "parameters": {
         "options": {
-          "systemMessage": "You are the n8n Community Leverage Copilot \u2014 an assistant for maintainers and contributors triaging the n8n-io/n8n open backlog.\n\nYou have two tools:\n1. **issue_search** \u2014 semantic search across ~427 open issues (titles, descriptions, labels, leverage scores).\n2. **top_ranking** \u2014 the live top-25 issues by leverage score (updated daily at 08:00 Europe/Paris).\n\nWhen answering:\n- Cite GitHub issue numbers and URLs.\n- Mention leverage score when relevant (higher = more community impact).\n- For contributor questions, suggest a concrete scope and whether it looks like a good-first-issue.\n- Top pain theme right now: **AI Agent / tool / memory** (e.g. #14361).\n- Be concise. Prefer bullet points for lists.\n\nIf the vector index was recently cleared, tell the user to run the \"Leverage \u2014 index bootstrap\" workflow once."
+          "systemMessage": "You are the n8n Community Leverage Copilot \u2014 an assistant for maintainers and contributors triaging the n8n-io/n8n open backlog.\n\nYou have tools:\n1. **issue_search** \u2014 semantic search across ~440 open issues + top community PRs.\n2. **top_ranking** \u2014 live top-25 issues by leverage (daily 08:00 Europe/Paris).\n3. **top_prs** \u2014 top community PRs to review first.\n4. **fetch_comments** \u2014 read the comment thread on a specific issue (pass issue number).\n5. **issue_deep_dive** \u2014 synthesize thread + propose contributor approach (pass issue number).\n6. **issue_pr_linker** \u2014 find open PRs mentioning an issue (pass issue number).\n7. **code_scout** \u2014 search n8n-io/n8n codebase for file paths (read-only, pass search terms).\n\nWhen answering:\n- Cite GitHub issue/PR numbers and URLs (/issues/ vs /pull/).\n- Mention leverage when relevant.\n- For contributor questions, use issue_deep_dive on the top issue.\n- Top pain theme: **AI Agent / tool / memory** (e.g. #14361).\n- Be concise. Bullet points for lists.\n\nIf vector index was cleared, tell user to run \"Leverage \u2014 index bootstrap\" once."
         }
       },
-      "id": "fa70d034-26cc-49c8-8a72-664060063308",
+      "id": "55abee6c-61f3-452d-a23a-06a0bbafdf5b",
       "name": "AI Agent",
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 1.3,
@@ -52,7 +52,7 @@
         "sessionKey": "={{ $json.sessionId }}",
         "contextWindowLength": 8
       },
-      "id": "25b8a0cf-847b-47bf-a7fa-fdbb2b9e4da5",
+      "id": "ec2751d5-1670-485e-a536-cdf39efd65b6",
       "name": "Simple Memory",
       "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
       "typeVersion": 1.3,
@@ -68,7 +68,7 @@
           "temperature": 0.2
         }
       },
-      "id": "bca2c51a-b90f-403e-8116-547eff0a457f",
+      "id": "4a20440a-21db-4333-9a01-0f3fb44bd329",
       "name": "Ollama Chat Model",
       "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
       "typeVersion": 1,
@@ -88,12 +88,12 @@
         "model": "nomic-embed-text:latest",
         "options": {}
       },
-      "id": "fa558480-9b51-43f6-ae10-5af7a0d47ddd",
+      "id": "bd519aaf-80c6-498e-a039-d95afbfbe560",
       "name": "Embeddings Ollama",
       "type": "@n8n/n8n-nodes-langchain.embeddingsOllama",
       "typeVersion": 1,
       "position": [
-        520,
+        760,
         320
       ],
       "credentials": {
@@ -107,7 +107,7 @@
       "parameters": {
         "mode": "retrieve-as-tool",
         "toolName": "issue_search",
-        "toolDescription": "Semantic search over n8n open GitHub issues. Use for themes (MCP, AI Agent, webhooks), similar issues, or problem descriptions.",
+        "toolDescription": "Semantic search over n8n open issues and top community PRs.",
         "memoryKey": {
           "__rl": true,
           "mode": "list",
@@ -115,10 +115,105 @@
         },
         "topK": 8
       },
-      "id": "aabe10a2-3fdb-48ed-9d01-3ca0cc7bf125",
+      "id": "da108de1-292f-4197-97a7-1b84d196f187",
       "name": "Issue search",
       "type": "@n8n/n8n-nodes-langchain.vectorStoreInMemory",
       "typeVersion": 1.2,
+      "position": [
+        760,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "name": "top_ranking",
+        "description": "Get top-25 issues by leverage.",
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "s2bX3oDLRPUamt0M"
+        }
+      },
+      "id": "d264772f-44dc-43f6-8014-77c32baa8eed",
+      "name": "Top Ranking",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2,
+      "position": [
+        520,
+        -200
+      ]
+    },
+    {
+      "parameters": {
+        "name": "top_prs",
+        "description": "Get top community PRs to review.",
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "ErItT8BHutyTa0rf"
+        }
+      },
+      "id": "6d30a8c9-d674-4f74-ae96-8d23d8db7f5a",
+      "name": "Top Prs",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2,
+      "position": [
+        520,
+        -120
+      ]
+    },
+    {
+      "parameters": {
+        "name": "fetch_comments",
+        "description": "Fetch comment thread for a GitHub issue number.",
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "8vGd2e5vuyAi0u0V"
+        }
+      },
+      "id": "8b351932-a4f1-42fd-a0c1-6ff4c4ddadc9",
+      "name": "Fetch Comments",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2,
+      "position": [
+        520,
+        -40
+      ]
+    },
+    {
+      "parameters": {
+        "name": "issue_deep_dive",
+        "description": "Deep dive: summarize issue thread and propose contributor approach.",
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "KjC9Bq8HnsxwyRpg"
+        }
+      },
+      "id": "5639a774-3ded-4812-b2fe-89669c597feb",
+      "name": "Issue Deep Dive",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2,
+      "position": [
+        520,
+        40
+      ]
+    },
+    {
+      "parameters": {
+        "name": "issue_pr_linker",
+        "description": "Find open PRs linked to an issue number.",
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "wzKasDRdfp8VgUI7"
+        }
+      },
+      "id": "945d9adb-c1b4-4cc6-8c47-a0f92830f758",
+      "name": "Issue Pr Linker",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2,
       "position": [
         520,
         120
@@ -126,21 +221,21 @@
     },
     {
       "parameters": {
-        "name": "top_ranking",
-        "description": "Get the current top-25 n8n open issues ranked by leverage score (reach \u00d7 severity \u00d7 recency). Use when asked what to fix first or for the daily ranking.",
+        "name": "code_scout",
+        "description": "Search n8n codebase for file paths (read-only).",
         "workflowId": {
           "__rl": true,
           "mode": "id",
-          "value": "s2bX3oDLRPUamt0M"
+          "value": "hnt00MJVcSNedoZf"
         }
       },
-      "id": "5670ea7f-e0bf-4fbb-917c-12edd1277c4f",
-      "name": "Top ranking",
+      "id": "b6fee466-9e3f-430a-8fd1-1545e716f54e",
+      "name": "Code Scout",
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2,
       "position": [
         520,
-        -80
+        200
       ]
     }
   ],
@@ -189,7 +284,18 @@
         ]
       ]
     },
-    "Top ranking": {
+    "Embeddings Ollama": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Issue search",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Top Ranking": {
       "ai_tool": [
         [
           {
@@ -200,12 +306,56 @@
         ]
       ]
     },
-    "Embeddings Ollama": {
-      "ai_embedding": [
+    "Top Prs": {
+      "ai_tool": [
         [
           {
-            "node": "Issue search",
-            "type": "ai_embedding",
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Comments": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Issue Deep Dive": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Issue Pr Linker": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code Scout": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
             "index": 0
           }
         ]

@@ -107,4 +107,10 @@ export function loadBacklog(): { issues: Scored[]; prs: Scored[] } {
   return { issues, prs };
 }
 
-export const gh = (n: number) => `https://github.com/n8n-io/n8n/issues/${n}`;
+export const ghUrl = (n: number, kind: 'issue' | 'pr' = 'issue') =>
+  kind === 'pr'
+    ? `https://github.com/n8n-io/n8n/pull/${n}`
+    : `https://github.com/n8n-io/n8n/issues/${n}`;
+
+/** @deprecated prefer ghUrl with explicit kind */
+export const gh = (n: number, kind: 'issue' | 'pr' = 'issue') => ghUrl(n, kind);

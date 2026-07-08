@@ -4,7 +4,7 @@
   "nodes": [
     {
       "parameters": {},
-      "id": "2988dc53-dd20-408e-8f4d-310f299c3cce",
+      "id": "deb39af0-a4b7-4778-94fd-b07eaa0ff748",
       "name": "Manual Trigger",
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
@@ -15,18 +15,18 @@
     },
     {
       "parameters": {
-        "content": "## Bootstrap issue index\n\nRun **once** after deploy (or after n8n restart \u2014 in-memory store clears).\n\nLoads 427 pre-exported issue documents from `/home/node/.n8n-files/leverage_docs.json` into the shared Simple Vector Store (`leverage_issues`). Takes ~5\u201310 min on CPU.",
-        "height": 200,
-        "width": 420,
+        "content": "## Bootstrap index\n\nRun after deploy or n8n restart. Loads issues + top PRs from leverage_docs.json (~440 docs).",
+        "height": 180,
+        "width": 400,
         "color": 3
       },
-      "id": "73fdc563-a379-43a4-87d1-99d8bff46acf",
+      "id": "3b1318cf-25b0-4e5e-8faf-59e301044000",
       "name": "About",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
         -220,
-        -220
+        -200
       ]
     },
     {
@@ -35,7 +35,7 @@
         "fileSelector": "/home/node/.n8n-files/leverage_docs.json",
         "options": {}
       },
-      "id": "aca84a7e-8da0-4650-a023-f1a9f1a64791",
+      "id": "316b9763-710c-4361-9902-49b91bf6710f",
       "name": "Read documents file",
       "type": "n8n-nodes-base.readWriteFile",
       "typeVersion": 1,
@@ -46,9 +46,9 @@
     },
     {
       "parameters": {
-        "jsCode": "const item = $input.first();\nconst binKey = Object.keys(item.binary || {})[0] || 'data';\nconst buffer = await this.helpers.getBinaryDataBuffer(0, binKey);\nconst text = buffer.toString('utf8');\nconst docs = JSON.parse(text);\nreturn docs.map((d) => ({\n  json: {\n    text: d.pageContent,\n    metadata: d.metadata,\n  },\n}));"
+        "jsCode": "const item = $input.first();\nconst binKey = Object.keys(item.binary || {})[0] || 'data';\nconst buffer = await this.helpers.getBinaryDataBuffer(0, binKey);\nconst docs = JSON.parse(buffer.toString('utf8'));\nreturn docs.map((d) => ({ json: { text: d.pageContent, metadata: d.metadata } }));"
       },
-      "id": "d90655e3-1dfc-4cdb-b3b8-2e456c35276a",
+      "id": "2a62565f-7636-4ef6-9ba6-2d456ce6df18",
       "name": "Parse documents",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -62,7 +62,7 @@
         "model": "nomic-embed-text:latest",
         "options": {}
       },
-      "id": "46ed4986-b476-4681-85b9-8261c3f20bb6",
+      "id": "cac44a22-3928-4057-aab4-88ffceec39e8",
       "name": "Embeddings Ollama",
       "type": "@n8n/n8n-nodes-langchain.embeddingsOllama",
       "typeVersion": 1,
@@ -84,7 +84,7 @@
         "textSplittingMode": "simple",
         "options": {}
       },
-      "id": "9667a48e-735f-4123-a0fc-6bf23291c2a1",
+      "id": "de8f70f4-5cfb-407a-b89f-74ba66f27c47",
       "name": "Default Data Loader",
       "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
       "typeVersion": 1.1,
@@ -103,7 +103,7 @@
         },
         "clearStore": true
       },
-      "id": "9f05a363-4772-4347-95e6-2219f312a56c",
+      "id": "f2b454ee-8718-41d3-a7f3-90b99a00df89",
       "name": "Issue Vector Store",
       "type": "@n8n/n8n-nodes-langchain.vectorStoreInMemory",
       "typeVersion": 1.2,
