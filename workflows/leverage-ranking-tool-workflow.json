@@ -15,7 +15,7 @@
     },
     {
       "parameters": {
-        "resource": "rows",
+        "resource": "row",
         "operation": "get",
         "dataTableId": {
           "__rl": true,
