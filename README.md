@@ -92,6 +92,8 @@ no re-embed locally. PR URLs use `/pull/`; issues use `/issues/` (`ghUrl` in lib
 
 Demo script: [DEMO.md](DEMO.md)
 
+Workflow JSON in `workflows/` is the source of truth for import/export.
+
 ## Roadmap
 
 - ~~**PR review depth (phase 1)**~~ — daily top-15 community PRs + `leverage_prs` table + linker tool shipped.
