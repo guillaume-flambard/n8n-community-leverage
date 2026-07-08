@@ -1,0 +1,79 @@
+{
+  "id": "s2bX3oDLRPUamt0M",
+  "name": "Leverage \u2014 top ranking tool",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "84167988-62af-466e-bd95-855f02f8c98e",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "rows",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "DCl7YFpc6jt8BUoV",
+          "cachedResultName": "leverage_ranking"
+        },
+        "returnAll": true,
+        "options": {}
+      },
+      "id": "f1368d2b-cb7b-4922-8ec9-5ab0b373e796",
+      "name": "Get ranking rows",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all().map((i) => i.json);\nrows.sort((a, b) => (b.leverage ?? 0) - (a.leverage ?? 0));\nconst top = rows.slice(0, 25);\nconst md = top\n  .map((r) => `\u2022 #${r.number} (leverage ${r.leverage}, \ud83d\udc4d${r.reactions}, \ud83d\udcac${r.comments})\\n  ${r.title}\\n  ${r.url}`)\n  .join('\\n\\n');\nreturn [{ json: { response: `Top ${top.length} n8n open issues by leverage:\\n\\n${md}` } }];"
+      },
+      "id": "04bff9af-9efc-4edd-abc2-fe314e0af862",
+      "name": "Format ranking",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get ranking rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get ranking rows": {
+      "main": [
+        [
+          {
+            "node": "Format ranking",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

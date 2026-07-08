@@ -1,0 +1,176 @@
+{
+  "id": "KOJmzKxRR0T3l6eF",
+  "name": "Leverage \u2014 index bootstrap (run once)",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "2988dc53-dd20-408e-8f4d-310f299c3cce",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -200,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Bootstrap issue index\n\nRun **once** after deploy (or after n8n restart \u2014 in-memory store clears).\n\nLoads 427 pre-exported issue documents from `/home/node/.n8n-files/leverage_docs.json` into the shared Simple Vector Store (`leverage_issues`). Takes ~5\u201310 min on CPU.",
+        "height": 200,
+        "width": 420,
+        "color": 3
+      },
+      "id": "73fdc563-a379-43a4-87d1-99d8bff46acf",
+      "name": "About",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -220,
+        -220
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "fileSelector": "/home/node/.n8n-files/leverage_docs.json",
+        "options": {}
+      },
+      "id": "aca84a7e-8da0-4650-a023-f1a9f1a64791",
+      "name": "Read documents file",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        20,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first();\nconst binKey = Object.keys(item.binary || {})[0] || 'data';\nconst buffer = await this.helpers.getBinaryDataBuffer(0, binKey);\nconst text = buffer.toString('utf8');\nconst docs = JSON.parse(text);\nreturn docs.map((d) => ({\n  json: {\n    text: d.pageContent,\n    metadata: d.metadata,\n  },\n}));"
+      },
+      "id": "d90655e3-1dfc-4cdb-b3b8-2e456c35276a",
+      "name": "Parse documents",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "model": "nomic-embed-text:latest",
+        "options": {}
+      },
+      "id": "46ed4986-b476-4681-85b9-8261c3f20bb6",
+      "name": "Embeddings Ollama",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOllama",
+      "typeVersion": 1,
+      "position": [
+        240,
+        180
+      ],
+      "credentials": {
+        "ollamaApi": {
+          "id": "vusS7V4DCAGU85B6",
+          "name": "Ollama (docker bridge)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "dataType": "json",
+        "jsonMode": "allInputData",
+        "textSplittingMode": "simple",
+        "options": {}
+      },
+      "id": "9667a48e-735f-4123-a0fc-6bf23291c2a1",
+      "name": "Default Data Loader",
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        240,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "memoryKey": {
+          "__rl": true,
+          "mode": "list",
+          "value": "leverage_issues"
+        },
+        "clearStore": true
+      },
+      "id": "9f05a363-4772-4347-95e6-2219f312a56c",
+      "name": "Issue Vector Store",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreInMemory",
+      "typeVersion": 1.2,
+      "position": [
+        480,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Read documents file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read documents file": {
+      "main": [
+        [
+          {
+            "node": "Parse documents",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse documents": {
+      "main": [
+        [
+          {
+            "node": "Issue Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Issue Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Ollama": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Issue Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

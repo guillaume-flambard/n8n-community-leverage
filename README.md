@@ -1,5 +1,10 @@
 # n8n Community Leverage Engine
 
+**60-second pitch:** I rank n8n's entire open backlog by community leverage, run it daily
+as an n8n workflow, and built a chat copilot to ask the backlog live — plus an open
+[PR #33785](https://github.com/n8n-io/n8n/pull/33785) on MCP headers. I don't just
+prioritize your backlog; I turn it into contributions.
+
 Ranks the entire open n8n backlog (427 issues + 1029 PRs) by **leverage** — what to
 fix and review *first* to help the most people — instead of by date or raw reaction
 count. Built as a work sample for the n8n Community Engineer role.
@@ -44,6 +49,7 @@ npm run fetch          # pull the live backlog into data/
 node src/leverage.ts    # v1 — keyword themes         -> REPORT.md
 node src/leverage_v2.ts # v2 — semantic clustering     -> REPORT_v2.md
 node src/briefs.ts      # contributor briefs (local LLM) -> BRIEFS.md
+npm run export:docs     # export vector docs for n8n Simple Vector Store -> data/vector_documents.json
 ```
 
 v2 needs a local [ollama](https://ollama.com) with `nomic-embed-text` pulled
@@ -68,12 +74,26 @@ area, suggested approach, scope, and good-first-issue call — landing in
 code entry points. This is the point of the tool: it does not just rank the backlog,
 it turns the top of it into contributable work. Briefs are labelled as hypotheses.
 
+## n8n workflows (dogfood — live on VPS)
+
+| Workflow | File | Role |
+|----------|------|------|
+| Daily ranking | [`workflows/leverage-workflow.json`](workflows/leverage-workflow.json) | Schedule → GitHub → leverage → Data Table |
+| Chat copilot | [`workflows/leverage-copilot-workflow.json`](workflows/leverage-copilot-workflow.json) | Chat → AI Agent → vector search + top-25 tool |
+| Index bootstrap | [`workflows/leverage-bootstrap-workflow.json`](workflows/leverage-bootstrap-workflow.json) | Load 427 issues into Simple Vector Store (run after restart) |
+
+`export_vector_docs.ts` bridges cached [`data/embeddings.json`](data/embeddings.json) +
+issue text into `data/vector_documents.json` for the n8n vector store — no re-fetch,
+no re-embed locally.
+
+Demo script: [DEMO.md](DEMO.md)
+
 ## Roadmap
 
 - **PR review depth** — join mergeability + CI status + linked-issue leverage so the review
   queue ranks by "closest to merge × highest impact."
-- **Ship as an n8n workflow** — Schedule → GitHub nodes → AI/LangChain embedding → pgvector
-  → report, dogfooding the product it triages.
+- ~~**Ship as an n8n workflow**~~ — daily ranking + chat copilot shipped (see above).
+- **pgvector at scale** — promote embeddings cache to Postgres when backlog grows.
 
 ## Honest limits
 
