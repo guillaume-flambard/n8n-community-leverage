@@ -3,11 +3,21 @@
   "name": "Leverage \u2014 issue PR linker tool",
   "nodes": [
     {
-      "parameters": {},
-      "id": "12aac3ad-fd2d-43a7-98ef-daf3cf469caa",
+      "parameters": {
+        "inputSource": "workflowInputs",
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "issue_number",
+              "type": "number"
+            }
+          ]
+        }
+      },
+      "id": "e1a5f0b5-2ca5-4ba6-8e25-991105acef49",
       "name": "Execute Workflow Trigger",
       "type": "n8n-nodes-base.executeWorkflowTrigger",
-      "typeVersion": 1,
+      "typeVersion": 1.2,
       "position": [
         0,
         0
@@ -15,27 +25,39 @@
     },
     {
       "parameters": {
-        "jsCode": "const raw = $input.first().json;\nconst text = String(raw.query ?? raw.chatInput ?? raw.issue_number ?? raw.input ?? '').trim();\nconst m = text.match(/#?(\\d{3,6})/);\nif (!m) {\n  return [{ json: { issueNumber: null, response: 'Provide an issue number (e.g. 14361 or #14361).' } }];\n}\nreturn [{ json: { issueNumber: parseInt(m[1], 10) } }];"
+        "method": "GET",
+        "url": "={{ 'https://api.github.com/search/issues?q=' + encodeURIComponent('repo:n8n-io/n8n type:pr ' + $('Execute Workflow Trigger').first().json.issue_number + ' in:body') + '&per_page=15' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
+        "options": {}
       },
-      "id": "e49f68ab-1495-424e-85a9-9f95960c68ea",
-      "name": "Parse input",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
+      "id": "6db12970-728f-4ee0-b10c-4add7001ba66",
+      "name": "Search linked PRs",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [
-        200,
+        220,
         0
-      ]
+      ],
+      "credentials": {
+        "githubApi": {
+          "id": "",
+          "name": "GitHub (guillaume-flambard)"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3
     },
     {
       "parameters": {
-        "jsCode": "const parsed = $('Parse input').first().json;\nif (!parsed.issueNumber) {\n  return [{ json: { response: parsed.response } }];\n}\nconst issueNumber = parsed.issueNumber;\nconst q = `repo:n8n-io/n8n type:pr ${issueNumber} in:body`;\nconst res = await this.helpers.httpRequestWithAuthentication.call(this, 'githubApi', {\n  method: 'GET',\n  url: `https://api.github.com/search/issues?q=${encodeURIComponent(q)}&per_page=15`,\n  json: true,\n});\nconst items = (res.items || []).filter((x) => x.number);\nif (!items.length) {\n  return [{ json: { response: `No open PRs found linking to #${issueNumber}. Try searching manually on GitHub.` } }];\n}\nconst md = items.slice(0, 10).map((p) => {\n  const url = p.html_url || `https://github.com/n8n-io/n8n/pull/${p.number}`;\n  return `\u2022 [#${p.number}](${url}) ${p.state || 'open'} \u2014 ${p.title}\\n  by @${p.user?.login ?? 'unknown'}`;\n}).join('\\n\\n');\nreturn [{ json: { response: `Open PRs potentially linked to #${issueNumber}:\\n\\n${md}` } }];"
+        "jsCode": "const issueNumber = $('Execute Workflow Trigger').first().json.issue_number;\nif (!issueNumber) {\n  return [{ json: { response: 'Provide a GitHub issue number (e.g. 14361).' } }];\n}\nconst res = $input.first().json;\nconst items = (res.items || []).filter((x) => x.number);\nif (!items.length) {\n  return [{ json: { response: `No open PRs found linking to #${issueNumber}. Try searching manually on GitHub.` } }];\n}\nconst md = items.slice(0, 10).map((p) => {\n  const url = p.html_url || `https://github.com/n8n-io/n8n/pull/${p.number}`;\n  return `\u2022 [#${p.number}](${url}) ${p.state || 'open'} \u2014 ${p.title}\\n  by @${p.user?.login ?? 'unknown'}`;\n}).join('\\n\\n');\nreturn [{ json: { response: `Open PRs potentially linked to #${issueNumber}:\\n\\n${md}` } }];"
       },
-      "id": "9e9a667d-5243-4e01-bf2a-357f798ab159",
-      "name": "Search linked PRs",
+      "id": "c0ecc085-66d3-45a8-a929-f6e216f67108",
+      "name": "Format PRs",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        420,
+        440,
         0
       ]
     }
@@ -45,18 +67,18 @@
       "main": [
         [
           {
-            "node": "Parse input",
+            "node": "Search linked PRs",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Parse input": {
+    "Search linked PRs": {
       "main": [
         [
           {
-            "node": "Search linked PRs",
+            "node": "Format PRs",
             "type": "main",
             "index": 0
           }

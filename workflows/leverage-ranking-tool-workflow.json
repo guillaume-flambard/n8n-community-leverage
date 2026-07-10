@@ -3,11 +3,13 @@
   "name": "Leverage \u2014 top ranking tool",
   "nodes": [
     {
-      "parameters": {},
-      "id": "90d016b2-ce34-4184-ab3d-8f8466680e7d",
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "68c79ea8-2f1b-4d50-b21d-669e153d8f9e",
       "name": "Execute Workflow Trigger",
       "type": "n8n-nodes-base.executeWorkflowTrigger",
-      "typeVersion": 1,
+      "typeVersion": 1.2,
       "position": [
         0,
         0
@@ -25,7 +27,7 @@
         },
         "returnAll": true
       },
-      "id": "773a4f5a-eda8-4c28-8a78-b5ba64304582",
+      "id": "21753a34-b1df-457c-821b-83f4421ea615",
       "name": "Get ranking rows",
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
@@ -38,7 +40,7 @@
       "parameters": {
         "jsCode": "const rows = $input.all().map((i) => i.json);\nrows.sort((a, b) => (b.leverage ?? 0) - (a.leverage ?? 0));\nconst top = rows.slice(0, 25);\nconst badge = (r) => (r.kind === 'pr' || String(r.url || '').includes('/pull/')) ? '[PR]' : '[issue]';\nconst md = top\n  .map((r) => `\u2022 ${badge(r)} #${r.number} (leverage ${r.leverage}, \ud83d\udc4d${r.reactions}, \ud83d\udcac${r.comments})\\n  ${r.title}\\n  ${r.url}`)\n  .join('\\n\\n');\nreturn [{ json: { response: `Top ${top.length} n8n open issues by leverage:\\n\\n${md}` } }];"
       },
-      "id": "71f88bef-4158-44e6-a3d7-f7f4ba2e0686",
+      "id": "663c02f6-a7fd-4e2c-ae3e-c2645ebd0efd",
       "name": "Format ranking",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,

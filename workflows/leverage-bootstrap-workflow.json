@@ -4,7 +4,7 @@
   "nodes": [
     {
       "parameters": {},
-      "id": "189c94b1-b02c-4e8c-b5ac-6e9db8042731",
+      "id": "3ba04b32-3e3d-40e8-9689-771c37386fc0",
       "name": "Manual Trigger",
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
@@ -20,7 +20,7 @@
         "width": 400,
         "color": 3
       },
-      "id": "5dc3fe3f-9f3b-4fab-b111-ffd100ee09bc",
+      "id": "905ae0ee-88a1-42e3-bb34-4576f03cf485",
       "name": "About",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
@@ -35,7 +35,7 @@
         "fileSelector": "/home/node/.n8n-files/leverage_docs.json",
         "options": {}
       },
-      "id": "5a6bd83a-f78e-4b14-be09-279d1ce950d5",
+      "id": "646fe3a3-66e3-47e6-a06c-745c772c7e12",
       "name": "Read documents file",
       "type": "n8n-nodes-base.readWriteFile",
       "typeVersion": 1,
@@ -48,7 +48,7 @@
       "parameters": {
         "jsCode": "const item = $input.first();\nconst binKey = Object.keys(item.binary || {})[0] || 'data';\nconst buffer = await this.helpers.getBinaryDataBuffer(0, binKey);\nconst docs = JSON.parse(buffer.toString('utf8'));\nreturn docs.map((d) => ({ json: { text: d.pageContent, metadata: d.metadata } }));"
       },
-      "id": "84a8e1e8-9eaf-42af-98a1-4ea2d94f6a07",
+      "id": "f10560fa-6de1-41f9-8378-783fd238efc6",
       "name": "Parse documents",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -62,7 +62,7 @@
         "model": "nomic-embed-text:latest",
         "options": {}
       },
-      "id": "cb7886d0-e938-4294-90c0-2d663fb5384f",
+      "id": "5cef3f56-87c1-4e0f-9557-e6dfc1a2be41",
       "name": "Embeddings Ollama",
       "type": "@n8n/n8n-nodes-langchain.embeddingsOllama",
       "typeVersion": 1,
@@ -72,7 +72,7 @@
       ],
       "credentials": {
         "ollamaApi": {
-          "id": "vusS7V4DCAGU85B6",
+          "id": "",
           "name": "Ollama (docker bridge)"
         }
       }
@@ -84,7 +84,7 @@
         "textSplittingMode": "simple",
         "options": {}
       },
-      "id": "3be4904a-39cc-433f-96a7-b7c015303b22",
+      "id": "d87edaa8-9282-44b9-829a-6be016538805",
       "name": "Default Data Loader",
       "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
       "typeVersion": 1.1,
@@ -103,7 +103,7 @@
         },
         "clearStore": true
       },
-      "id": "cce45e11-eaee-4b6c-9ae3-b93ad4749870",
+      "id": "7e69c565-a792-4ba2-ac26-f205e4da09cb",
       "name": "Issue Vector Store",
       "type": "@n8n/n8n-nodes-langchain.vectorStoreInMemory",
       "typeVersion": 1.2,

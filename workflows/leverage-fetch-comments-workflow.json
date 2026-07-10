@@ -3,11 +3,21 @@
   "name": "Leverage \u2014 fetch comments tool",
   "nodes": [
     {
-      "parameters": {},
-      "id": "f1195915-8560-45bf-85b7-207ac6587a0b",
+      "parameters": {
+        "inputSource": "workflowInputs",
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "issue_number",
+              "type": "number"
+            }
+          ]
+        }
+      },
+      "id": "5d7b45a7-73b8-4fc6-a9c8-f382aac1e017",
       "name": "Execute Workflow Trigger",
       "type": "n8n-nodes-base.executeWorkflowTrigger",
-      "typeVersion": 1,
+      "typeVersion": 1.2,
       "position": [
         0,
         0
@@ -15,27 +25,39 @@
     },
     {
       "parameters": {
-        "jsCode": "const raw = $input.first().json;\nconst text = String(raw.query ?? raw.chatInput ?? raw.issue_number ?? raw.input ?? '').trim();\nconst m = text.match(/#?(\\d{3,6})/);\nif (!m) {\n  return [{ json: { issueNumber: null, response: 'Provide an issue number (e.g. 14361 or #14361).' } }];\n}\nreturn [{ json: { issueNumber: parseInt(m[1], 10) } }];"
+        "method": "GET",
+        "url": "={{ 'https://api.github.com/repos/n8n-io/n8n/issues/' + $('Execute Workflow Trigger').first().json.issue_number + '/comments?per_page=100' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
+        "options": {}
       },
-      "id": "ba1dfe8c-fb20-40c8-84c0-292795eb9fad",
-      "name": "Parse input",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
+      "id": "754db55d-d9d1-4b5b-88a6-49b564e42944",
+      "name": "GitHub comments",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [
-        200,
+        220,
         0
-      ]
+      ],
+      "credentials": {
+        "githubApi": {
+          "id": "",
+          "name": "GitHub (guillaume-flambard)"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3
     },
     {
       "parameters": {
-        "jsCode": "const parsed = $('Parse input').first().json;\nif (!parsed.issueNumber) {\n  return [{ json: { response: parsed.response } }];\n}\nconst issueNumber = parsed.issueNumber;\nconst raw = await this.helpers.httpRequestWithAuthentication.call(this, 'githubApi', {\n  method: 'GET',\n  url: `https://api.github.com/repos/n8n-io/n8n/issues/${issueNumber}/comments?per_page=100`,\n  json: true,\n});\nconst skip = new Set(['dependabot[bot]', 'n8n-io[bot]', 'github-actions[bot]']);\nconst comments = (Array.isArray(raw) ? raw : []).filter((c) => c.body && !skip.has(c.user?.login)).slice(0, 30);\nif (!comments.length) {\n  return [{ json: { response: `No comments found for #${issueNumber}.` } }];\n}\nconst lines = comments.map((c) => {\n  const who = c.user?.login ?? 'unknown';\n  const assoc = c.author_association ?? '';\n  const body = (c.body ?? '').replace(/\\s+/g, ' ').slice(0, 600);\n  return `**@${who}** (${assoc}): ${body}`;\n});\nreturn [{\n  json: {\n    response: `# Comments on #${issueNumber} (${comments.length} shown, newest last)\\n\\n${lines.join('\\n\\n')}`,\n  },\n}];"
+        "jsCode": "const issueNumber = $('Execute Workflow Trigger').first().json.issue_number;\nif (!issueNumber) {\n  return [{ json: { response: 'Provide a GitHub issue number (e.g. 14361).' } }];\n}\nconst rows = $input.all().map((i) => i.json);\nconst flat = rows.flatMap((r) => (Array.isArray(r) ? r : [r]));\nconst skip = new Set(['dependabot[bot]', 'n8n-io[bot]', 'github-actions[bot]']);\nconst comments = flat.filter((c) => c?.body && !skip.has(c.user?.login)).slice(0, 30);\nif (!comments.length) {\n  return [{ json: { response: `No comments found for #${issueNumber}.` } }];\n}\nconst lines = comments.map((c) => {\n  const who = c.user?.login ?? 'unknown';\n  const assoc = c.author_association ?? '';\n  const body = (c.body ?? '').replace(/\\s+/g, ' ').slice(0, 600);\n  return `**@${who}** (${assoc}): ${body}`;\n});\nreturn [{\n  json: {\n    response: `# Comments on #${issueNumber} (${comments.length} shown, newest last)\\n\\n${lines.join('\\n\\n')}`,\n  },\n}];"
       },
-      "id": "d096206e-451d-4033-a0db-6a6c57a29136",
-      "name": "Fetch comments",
+      "id": "bcc424f2-dab1-44d3-90cf-7bd160f4d9b9",
+      "name": "Format comments",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        420,
+        440,
         0
       ]
     }
@@ -45,18 +67,18 @@
       "main": [
         [
           {
-            "node": "Parse input",
+            "node": "GitHub comments",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Parse input": {
+    "GitHub comments": {
       "main": [
         [
           {
-            "node": "Fetch comments",
+            "node": "Format comments",
             "type": "main",
             "index": 0
           }

@@ -269,7 +269,7 @@
       "webhookId": "d1a46956-177a-452e-b14f-b394ad8cfccb",
       "credentials": {
         "githubApi": {
-          "id": "myYgWBVQwd4sro7Q",
+          "id": "",
           "name": "GitHub (guillaume-flambard)"
         }
       }
@@ -305,7 +305,7 @@
       ],
       "credentials": {
         "githubApi": {
-          "id": "myYgWBVQwd4sro7Q",
+          "id": "",
           "name": "GitHub (guillaume-flambard)"
         }
       },

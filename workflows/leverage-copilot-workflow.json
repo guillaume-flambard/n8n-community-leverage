@@ -9,7 +9,7 @@
         "width": 480,
         "color": 4
       },
-      "id": "17b6acad-9862-4646-8d97-f54b28577250",
+      "id": "db25aac0-6121-4cdf-9efe-a977b4cc9c3e",
       "name": "About",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
@@ -22,7 +22,7 @@
       "parameters": {
         "options": {}
       },
-      "id": "5c344a28-374e-4eba-a5a8-17eab171c1c7",
+      "id": "3ebf2174-1c9e-48c2-81ac-ca39b6e895b5",
       "name": "Chat Trigger",
       "type": "@n8n/n8n-nodes-langchain.chatTrigger",
       "typeVersion": 1.1,
@@ -38,7 +38,7 @@
           "systemMessage": "You are the n8n Community Leverage Copilot \u2014 an assistant for maintainers and contributors triaging the n8n-io/n8n open backlog.\n\nYou have tools:\n1. **issue_search** \u2014 semantic search across ~440 open issues + top community PRs.\n2. **top_ranking** \u2014 live top-25 issues by leverage (daily 08:00 Europe/Paris).\n3. **top_prs** \u2014 top community PRs to review first.\n4. **fetch_comments** \u2014 read the comment thread on a specific issue (pass issue number).\n5. **issue_deep_dive** \u2014 synthesize thread + propose contributor approach (pass issue number).\n6. **issue_pr_linker** \u2014 find open PRs mentioning an issue (pass issue number).\n7. **code_scout** \u2014 search n8n-io/n8n codebase for file paths (read-only, pass search terms).\n\nWhen answering:\n- Cite GitHub issue/PR numbers and URLs (/issues/ vs /pull/).\n- Mention leverage when relevant.\n- For contributor questions, use issue_deep_dive on the top issue.\n- Top pain theme: **AI Agent / tool / memory** (e.g. #14361).\n- Be concise. Bullet points for lists.\n\nIf vector index was cleared, tell user to run \"Leverage \u2014 index bootstrap\" once."
         }
       },
-      "id": "71110a46-cd6b-479b-acc1-c5e9082bb2c0",
+      "id": "9481c168-137c-419b-aa6f-975f7ada481d",
       "name": "AI Agent",
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 1.3,
@@ -52,7 +52,7 @@
         "sessionKey": "={{ $json.sessionId }}",
         "contextWindowLength": 8
       },
-      "id": "01acc26e-1242-42dd-bb8d-cdd352191643",
+      "id": "0d424227-faa4-4f63-b386-30bc0244da60",
       "name": "Simple Memory",
       "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
       "typeVersion": 1.3,
@@ -68,7 +68,7 @@
           "temperature": 0.2
         }
       },
-      "id": "63228475-ed58-43c4-bf16-1cf4a23054f6",
+      "id": "5db8b2c2-c768-422e-8bd7-7c79f5b556b5",
       "name": "Ollama Chat Model",
       "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
       "typeVersion": 1,
@@ -78,7 +78,7 @@
       ],
       "credentials": {
         "ollamaApi": {
-          "id": "vusS7V4DCAGU85B6",
+          "id": "",
           "name": "Ollama (docker bridge)"
         }
       }
@@ -88,7 +88,7 @@
         "model": "nomic-embed-text:latest",
         "options": {}
       },
-      "id": "d0b9cbcb-a864-4455-84d6-f74f912f047c",
+      "id": "9c868e4c-82f0-4d8a-ad27-d409d6ebecda",
       "name": "Embeddings Ollama",
       "type": "@n8n/n8n-nodes-langchain.embeddingsOllama",
       "typeVersion": 1,
@@ -98,7 +98,7 @@
       ],
       "credentials": {
         "ollamaApi": {
-          "id": "vusS7V4DCAGU85B6",
+          "id": "",
           "name": "Ollama (docker bridge)"
         }
       }
@@ -115,7 +115,7 @@
         },
         "topK": 8
       },
-      "id": "0708e594-0db8-47c4-81cf-cd157d1442e5",
+      "id": "6ab4bf91-d5b9-40ea-8b08-d6ef017a1fdf",
       "name": "Issue search",
       "type": "@n8n/n8n-nodes-langchain.vectorStoreInMemory",
       "typeVersion": 1.2,
@@ -126,18 +126,18 @@
     },
     {
       "parameters": {
-        "name": "top_ranking",
-        "description": "Get top-25 issues by leverage.",
+        "description": "Get top-25 issues by leverage score.",
+        "source": "database",
         "workflowId": {
           "__rl": true,
           "mode": "id",
           "value": "s2bX3oDLRPUamt0M"
         }
       },
-      "id": "faaf8ff9-1b13-4378-b800-7ad2f851c8e7",
-      "name": "Top Ranking",
+      "id": "019ecf01-dcfa-4e00-8bb9-181e52557b7f",
+      "name": "top_ranking",
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
-      "typeVersion": 2,
+      "typeVersion": 2.2,
       "position": [
         520,
         -200
@@ -145,18 +145,18 @@
     },
     {
       "parameters": {
-        "name": "top_prs",
-        "description": "Get top community PRs to review.",
+        "description": "Get top community PRs to review first.",
+        "source": "database",
         "workflowId": {
           "__rl": true,
           "mode": "id",
           "value": "ErItT8BHutyTa0rf"
         }
       },
-      "id": "fdae41bb-2ecf-4ab2-8f51-bbbd65f8b9d5",
-      "name": "Top Prs",
+      "id": "e7913b6e-3a71-4205-9b44-c1f091dd438e",
+      "name": "top_prs",
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
-      "typeVersion": 2,
+      "typeVersion": 2.2,
       "position": [
         520,
         -120
@@ -164,18 +164,36 @@
     },
     {
       "parameters": {
-        "name": "fetch_comments",
-        "description": "Fetch comment thread for a GitHub issue number.",
+        "description": "Fetch the comment thread for a GitHub issue number.",
+        "source": "database",
         "workflowId": {
           "__rl": true,
           "mode": "id",
           "value": "8vGd2e5vuyAi0u0V"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "issue_number": "={ $fromAI('issue_number', 'GitHub issue number, e.g. 14361', 'number') }"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "issue_number",
+              "displayName": "issue_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number"
+            }
+          ]
         }
       },
-      "id": "23e67a29-705e-462f-9871-d3ce47d698d1",
-      "name": "Fetch Comments",
+      "id": "f0863a85-573e-45b7-adec-d2c10ca3e8cb",
+      "name": "fetch_comments",
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
-      "typeVersion": 2,
+      "typeVersion": 2.2,
       "position": [
         520,
         -40
@@ -183,18 +201,36 @@
     },
     {
       "parameters": {
-        "name": "issue_deep_dive",
         "description": "Deep dive: summarize issue thread and propose contributor approach.",
+        "source": "database",
         "workflowId": {
           "__rl": true,
           "mode": "id",
           "value": "KjC9Bq8HnsxwyRpg"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "issue_number": "={ $fromAI('issue_number', 'GitHub issue number to analyze', 'number') }"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "issue_number",
+              "displayName": "issue_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number"
+            }
+          ]
         }
       },
-      "id": "f2f7de89-1ca9-4815-a27f-edc9d02b8243",
-      "name": "Issue Deep Dive",
+      "id": "95221575-4a2d-41df-9601-f52dea88d162",
+      "name": "issue_deep_dive",
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
-      "typeVersion": 2,
+      "typeVersion": 2.2,
       "position": [
         520,
         40
@@ -202,18 +238,36 @@
     },
     {
       "parameters": {
-        "name": "issue_pr_linker",
-        "description": "Find open PRs linked to an issue number.",
+        "description": "Find open PRs that mention or link to an issue number.",
+        "source": "database",
         "workflowId": {
           "__rl": true,
           "mode": "id",
           "value": "wzKasDRdfp8VgUI7"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "issue_number": "={ $fromAI('issue_number', 'GitHub issue number to find linked PRs', 'number') }"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "issue_number",
+              "displayName": "issue_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number"
+            }
+          ]
         }
       },
-      "id": "6ae91726-3d4a-41d1-84d1-5cfb36e4d62e",
-      "name": "Issue Pr Linker",
+      "id": "b62773f3-89b1-49a0-b869-553b4b3dcc2b",
+      "name": "issue_pr_linker",
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
-      "typeVersion": 2,
+      "typeVersion": 2.2,
       "position": [
         520,
         120
@@ -221,18 +275,36 @@
     },
     {
       "parameters": {
-        "name": "code_scout",
-        "description": "Search n8n codebase for file paths (read-only).",
+        "description": "Search n8n-io/n8n codebase for file paths (read-only).",
+        "source": "database",
         "workflowId": {
           "__rl": true,
           "mode": "id",
           "value": "hnt00MJVcSNedoZf"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "search_query": "={ $fromAI('search_query', 'Code search terms, e.g. McpTrigger', 'string') }"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "search_query",
+              "displayName": "search_query",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ]
         }
       },
-      "id": "c078e70b-cc47-4634-8872-938730202ea2",
-      "name": "Code Scout",
+      "id": "7cde6878-9af5-4dab-ab80-1b2074119229",
+      "name": "code_scout",
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
-      "typeVersion": 2,
+      "typeVersion": 2.2,
       "position": [
         520,
         200
@@ -295,7 +367,7 @@
         ]
       ]
     },
-    "Top Ranking": {
+    "top_ranking": {
       "ai_tool": [
         [
           {
@@ -306,7 +378,7 @@
         ]
       ]
     },
-    "Top Prs": {
+    "top_prs": {
       "ai_tool": [
         [
           {
@@ -317,7 +389,7 @@
         ]
       ]
     },
-    "Fetch Comments": {
+    "fetch_comments": {
       "ai_tool": [
         [
           {
@@ -328,7 +400,7 @@
         ]
       ]
     },
-    "Issue Deep Dive": {
+    "issue_deep_dive": {
       "ai_tool": [
         [
           {
@@ -339,7 +411,7 @@
         ]
       ]
     },
-    "Issue Pr Linker": {
+    "issue_pr_linker": {
       "ai_tool": [
         [
           {
@@ -350,7 +422,7 @@
         ]
       ]
     },
-    "Code Scout": {
+    "code_scout": {
       "ai_tool": [
         [
           {

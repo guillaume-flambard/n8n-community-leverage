@@ -3,11 +3,21 @@
   "name": "Leverage \u2014 code scout tool",
   "nodes": [
     {
-      "parameters": {},
-      "id": "55a946d7-3638-43a6-aa9f-fc4662e04a53",
+      "parameters": {
+        "inputSource": "workflowInputs",
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "search_query",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "id": "c603042a-ddba-40e2-ae02-2113c49136de",
       "name": "Execute Workflow Trigger",
       "type": "n8n-nodes-base.executeWorkflowTrigger",
-      "typeVersion": 1,
+      "typeVersion": 1.2,
       "position": [
         0,
         0
@@ -15,27 +25,39 @@
     },
     {
       "parameters": {
-        "jsCode": "const raw = $input.first().json;\nconst text = String(raw.query ?? raw.chatInput ?? raw.search ?? '').trim();\nif (!text || text.length < 3) {\n  return [{ json: { search: null, response: 'Provide a search term (e.g. McpTrigger or AI Agent memory).' } }];\n}\nreturn [{ json: { search: text.slice(0, 120) } }];"
+        "method": "GET",
+        "url": "={{ 'https://api.github.com/search/code?q=' + encodeURIComponent('repo:n8n-io/n8n ' + $('Execute Workflow Trigger').first().json.search_query) + '&per_page=10' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
+        "options": {}
       },
-      "id": "4eb6f1f8-cb97-42dc-a9ee-52dde487a35b",
-      "name": "Parse search",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
+      "id": "225bd44a-962f-4f43-b80d-601dca5ed922",
+      "name": "Search code",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [
-        200,
+        220,
         0
-      ]
+      ],
+      "credentials": {
+        "githubApi": {
+          "id": "",
+          "name": "GitHub (guillaume-flambard)"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3
     },
     {
       "parameters": {
-        "jsCode": "const parsed = $('Parse search').first().json;\nif (!parsed.search) {\n  return [{ json: { response: parsed.response || 'Provide a search term (e.g. McpTrigger).' } }];\n}\nconst search = parsed.search;\nconst q = `repo:n8n-io/n8n ${search}`;\nconst res = await this.helpers.httpRequestWithAuthentication.call(this, 'githubApi', {\n  method: 'GET',\n  url: `https://api.github.com/search/code?q=${encodeURIComponent(q)}&per_page=10`,\n  json: true,\n});\nconst items = (res.items || []).filter((x) => x.path);\nif (!items.length) {\n  return [{ json: { response: `No code matches for \"${search}\" in n8n-io/n8n.` } }];\n}\nconst md = items.slice(0, 8).map((f) => {\n  const url = f.html_url || `https://github.com/n8n-io/n8n/blob/master/${f.path}`;\n  return `\u2022 ${f.path} \u2014 ${url}`;\n}).join('\\n');\nreturn [{\n  json: {\n    response: `Code scout (read-only) for \"${search}\" in n8n-io/n8n:\\n\\n${md}\\n\\n_Use these paths as hypotheses \u2014 verify before patching._`,\n  },\n}];"
+        "jsCode": "const search = $('Execute Workflow Trigger').first().json.search_query;\nif (!search) {\n  return [{ json: { response: 'Provide a search term (e.g. McpTrigger or AI Agent memory).' } }];\n}\nconst res = $input.first().json;\nconst items = (res.items || []).filter((x) => x.path);\nif (!items.length) {\n  return [{ json: { response: `No code matches for \"${search}\" in n8n-io/n8n.` } }];\n}\nconst md = items.slice(0, 8).map((f) => {\n  const url = f.html_url || `https://github.com/n8n-io/n8n/blob/master/${f.path}`;\n  return `\u2022 ${f.path} \u2014 ${url}`;\n}).join('\\n');\nreturn [{\n  json: {\n    response: `Code scout (read-only) for \"${search}\" in n8n-io/n8n:\\n\\n${md}\\n\\n_Use these paths as hypotheses \u2014 verify before patching._`,\n  },\n}];"
       },
-      "id": "9866fd12-9030-4597-b052-3c0c639c850c",
-      "name": "Search code",
+      "id": "4bc4579b-5c5d-4f93-b500-bf157fa63100",
+      "name": "Format results",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        420,
+        440,
         0
       ]
     }
@@ -45,18 +67,18 @@
       "main": [
         [
           {
-            "node": "Parse search",
+            "node": "Search code",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Parse search": {
+    "Search code": {
       "main": [
         [
           {
-            "node": "Search code",
+            "node": "Format results",
             "type": "main",
             "index": 0
           }

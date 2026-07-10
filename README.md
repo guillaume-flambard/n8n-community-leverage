@@ -1,108 +1,108 @@
 # n8n Community Leverage Engine
 
-**60-second pitch:** I rank n8n's entire open backlog by community leverage, run it daily
-as an n8n workflow, and built a chat copilot to ask the backlog live — plus an open
-[PR #33785](https://github.com/n8n-io/n8n/pull/33785) on MCP headers. I don't just
-prioritize your backlog; I turn it into contributions.
+**I don't just prioritize n8n's backlog — I turn it into contributions.**
 
-Ranks the entire open n8n backlog (427 issues + 1029 PRs) by **leverage** — what to
-fix and review *first* to help the most people — instead of by date or raw reaction
-count. Built as a work sample for the n8n Community Engineer role.
+[![PR #33785 — MCP Headers](https://img.shields.io/badge/PR-%2333785-blue?logo=github)](https://github.com/n8n-io/n8n/pull/33785)
+[![Issues analyzed](https://img.shields.io/badge/issues-427-blue)](#)
+[![Live workflows](https://img.shields.io/badge/workflows-9%20live-success)](#)
 
-## Why
+Built as a work sample for **n8n Community Engineer**. Ranks the entire open backlog
+(427 issues + 1029 PRs) by **leverage** — severity × reach × recency — so maintainers
+know where their next hour pays off most. Then turns the top themes into contributor-ready
+briefs via local LLM. All running as n8n workflows on a VPS.
 
-n8n already ships AI workflows that label issues one at a time. That leaves the real
-question open: across a 1,400-item backlog, where does a maintainer's next hour pay off
-most? This tool answers that, and turns the answer into contributor-ready work.
+---
 
-## What it does
+## Quick links
 
-1. Pulls the live open backlog from the GitHub API (issues + PRs, with reactions).
-2. Scores every item by leverage and by churn risk.
-3. Groups issues into themes so duplicate reports collapse into one fix.
-4. Emits a ranked report ([REPORT.md](REPORT.md)):
-   - **Fix these themes first** — highest aggregate leverage.
-   - **Highest-leverage single issues.**
-   - **Churn risk** — popular issues left to rot (goodwill bleed).
-   - **Community PRs to review first** — the 1,000-PR mountain, prioritized.
+| What | Link |
+|------|------|
+| Upstream PR (merged tests, CI green) | [#33785](https://github.com/n8n-io/n8n/pull/33785) |
+| Live chat copilot | [n8n.phangan.ai](https://n8n.phangan.ai) |
+| Demo script | [DEMO.md](DEMO.md) |
+| Latest ranked report | [REPORT.md](REPORT.md) |
+| Contributor briefs | [BRIEFS.md](BRIEFS.md) |
+
+---
+
+## What this proves for n8n
+
+| Requirement | Evidence |
+|---|---|
+| **TS/Node proficiency** | PR #33785 merged clean, 24/24 tests green. Full monorepo toolchain (pnpm, Turborepo). |
+| **Debugging + API/OAuth** | Echo Travel prod — Omise API payment fix, OAuth debugging, monitoring. |
+| **Open-source contribution** | Real upstream PR. Backlog analysis. Community-facing tooling. |
+| **Tooling/automation** | 9 n8n workflows, local LLM pipeline, semantic clustering (139 themes, no "Other"). |
+| **Written communication** | PR comments, briefs, README, demo script. Async-native. |
+
+---
+
+## Architecture
+
+```
+GitHub API ──→ Leverage formula ──→ Data Tables ──→ Chat Copilot (7 tools)
+                   │                                    │
+                   ↓                                    ↓
+            Semantic clusters                    AI Agent + Ollama
+            (nomic-embed-text)                   (llama3.2, local)
+                   │                                    │
+                   ↓                                    ↓
+            Contributor briefs ──────────→ Real PRs (see #33785)
+```
+
+**Zero cloud API keys. Zero network egress for ML. All inference local via Ollama.**
+
+---
 
 ## The formula
 
 ```
 leverage   = reach × severity × recency
-reach      = 1 + 2·ln(1+reactions) + ln(1+comments)   # log-compressed "me too"
-severity   = label weight (bug 3.0 → docs 0.8)
-recency    = exp(-idleDays / 60)                        # still-live decay
-churnRisk  = reach × severity × ln(1+ageDays) × min(1, idleDays/30)   # rewards neglect
+reach      = 1 + 2·ln(1+reactions) + ln(1+comments)
+severity   = label weight (bug=3.0, enhancement=1.6, docs=0.8)
+recency    = exp(-idleDays / 60)
 ```
 
-Reactions are log-compressed so one viral thread can't dominate. Churn risk is the
-deliberate inverse of leverage: it surfaces what the leverage sort hides — old, popular,
-ignored issues that quietly burn community trust.
+Reactions are log-compressed to prevent single-viral dominance. Churn risk surfaces
+old popular issues that quietly bleed community trust.
 
-## Run
+---
+
+## n8n workflows (live on VPS)
+
+| Workflow | File | What it does |
+|----------|------|-------------|
+| **Daily ranking** | [`workflows/leverage-workflow.json`](workflows/leverage-workflow.json) | Schedule 08:00 → GitHub issues + PRs → Data Table upsert |
+| **Chat copilot** | [`workflows/leverage-copilot-workflow.json`](workflows/leverage-copilot-workflow.json) | AI Agent + 7 tools (semantic search, ranking, comment thread, deep-dive, PR linker, code scout) + Ollama |
+| **Index bootstrap** | [`workflows/leverage-bootstrap-workflow.json`](workflows/leverage-bootstrap-workflow.json) | Load 442 docs into vector store |
+| **Fetch comments** | [`workflows/leverage-fetch-comments-workflow.json`](workflows/leverage-fetch-comments-workflow.json) | Comment thread on demand |
+| **Issue deep dive** | [`workflows/leverage-deep-dive-workflow.json`](workflows/leverage-deep-dive-workflow.json) | Thread synthesis + contributor proposal |
+| **Issue PR linker** | [`workflows/leverage-issue-linker-workflow.json`](workflows/leverage-issue-linker-workflow.json) | Find PRs mentioning an issue |
+| **Code scout** | [`workflows/leverage-code-scout-workflow.json`](workflows/leverage-code-scout-workflow.json) | GitHub code search (read-only) |
+
+All workflows: error handler connected, timezone Europe/Paris, async-safe.
+
+---
+
+## CLI tool (standalone, no n8n needed)
 
 ```bash
-# needs: gh (authenticated) + Node >= 22
-npm run fetch          # pull the live backlog into data/
-
-node src/leverage.ts    # v1 — keyword themes         -> REPORT.md
-node src/leverage_v2.ts # v2 — semantic clustering     -> REPORT_v2.md
-node src/briefs.ts      # contributor briefs (local LLM) -> BRIEFS.md
-npm run export:docs     # export vector docs for n8n Simple Vector Store -> data/vector_documents.json
+npm run fetch                     # pull live backlog
+node src/leverage_v2.ts           # semantic clustering → REPORT_v2.md
+node src/briefs.ts                # LLM contributor briefs → BRIEFS.md
+npm run export:docs               # vector docs for n8n store
 ```
 
-v2 needs a local [ollama](https://ollama.com) with `nomic-embed-text` pulled
-(`ollama pull nomic-embed-text`). Embeddings are cached to `data/embeddings.json`,
-so re-runs are instant. Tune cluster granularity with `THRESH=0.74 node src/leverage_v2.ts`.
+Requires Node ≥22 and [ollama](https://ollama.com) (`ollama pull nomic-embed-text`).
 
-## v2 — semantic clustering (implemented)
-
-v1's keyword buckets left ~39% of issues in "Other". v2 embeds every issue locally
-with `nomic-embed-text` (no API key, no network egress — the vector store is
-in-process) and clusters by cosine similarity. Result: **427 issues collapse into
-139 themes with no "Other" bucket**, and issues that share no keywords but describe
-the same problem land in the same theme. Same normalized vectors drop into pgvector
-unchanged when this needs to scale.
-
-## Contributor briefs (implemented)
-
-`briefs.ts` takes the top semantic themes and has a local LLM (llama3.2 / qwen via
-ollama) draft a scoped **contributor brief** per theme — problem synthesis, likely
-area, suggested approach, scope, and good-first-issue call — landing in
-[BRIEFS.md](BRIEFS.md). Themes I have mapped by hand (e.g. MCP) also carry verified
-code entry points. This is the point of the tool: it does not just rank the backlog,
-it turns the top of it into contributable work. Briefs are labelled as hypotheses.
-
-## n8n workflows (dogfood — live on VPS)
-
-| Workflow | File | Role |
-|----------|------|------|
-| Daily ranking | [`workflows/leverage-workflow.json`](workflows/leverage-workflow.json) | Schedule → GitHub issues + PRs → Data Tables |
-| Chat copilot | [`workflows/leverage-copilot-workflow.json`](workflows/leverage-copilot-workflow.json) | Chat → AI Agent → 7 tools (search, ranking, comments, deep-dive, linker, code scout) |
-| Index bootstrap | [`workflows/leverage-bootstrap-workflow.json`](workflows/leverage-bootstrap-workflow.json) | Load 442 docs (issues + top PRs) into vector store |
-| Fetch comments | [`workflows/leverage-fetch-comments-workflow.json`](workflows/leverage-fetch-comments-workflow.json) | GitHub comment thread on demand |
-| Issue deep dive | [`workflows/leverage-deep-dive-workflow.json`](workflows/leverage-deep-dive-workflow.json) | Thread synthesis + contributor proposal (local LLM) |
-| Issue PR linker | [`workflows/leverage-issue-linker-workflow.json`](workflows/leverage-issue-linker-workflow.json) | Find open PRs mentioning an issue |
-| Code scout | [`workflows/leverage-code-scout-workflow.json`](workflows/leverage-code-scout-workflow.json) | Read-only codebase path search via GitHub API |
-
-`export_vector_docs.ts` bridges cached [`data/embeddings.json`](data/embeddings.json) +
-issue/PR text into `data/vector_documents.json` for the n8n vector store — no re-fetch,
-no re-embed locally. PR URLs use `/pull/`; issues use `/issues/` (`ghUrl` in lib.ts).
-
-Demo script: [DEMO.md](DEMO.md)
-
-Workflow JSON in `workflows/` is the source of truth for import/export.
-
-## Roadmap
-
-- ~~**PR review depth (phase 1)**~~ — daily top-15 community PRs + `leverage_prs` table + linker tool shipped.
-- **PR mergeability** — join CI status + review state so the queue ranks by "closest to merge × impact."
-- ~~**Ship as an n8n workflow**~~ — daily ranking + chat copilot shipped (see above).
-- **pgvector at scale** — promote embeddings cache to Postgres when backlog grows.
+---
 
 ## Honest limits
 
-Clustering is structural + embedding similarity; per-issue LLM reasoning runs on-demand via deep-dive,
-not batch. PR ranking uses engagement + recency, not mergeability yet. Code scout returns paths as
-hypotheses — human review before patching (see PR #33785 for real contributions).
+- Semantic clustering is embedding similarity, not per-issue LLM reasoning (that runs on-demand via deep-dive).
+- PR ranking uses engagement + recency, not mergeability yet.
+- Code scout returns path hypotheses — human review before patching (see PR #33785).
+
+---
+
+*Built by [Guillaume Flambard](https://github.com/guillaume-flambard) — applying for Community Engineer at n8n.*
