@@ -4,7 +4,7 @@
   "nodes": [
     {
       "parameters": {
-        "content": "## Leverage Copilot\n\nChat with the **live n8n backlog**. Vector search (issues + PRs) + ranking tables + **comment deep-dive**.\n\n**Demo:**\n- Why is #14361 ranked first?\n- Deep dive #14361 \u2014 what are maintainers saying?\n- What MCP issues hurt most?\n- code_scout: McpTrigger",
+        "content": "## Leverage Copilot\n\nChat with the **live n8n backlog**. Vector search (issues + PRs) + ranking tables + **comment deep-dive**.\n\n**Auth:** Set `LEVERAGE_COPILOT_SECRET` env var and pass as `x-leverage-secret` header. Unset = open access (dev only).\n\n**Demo:**\n- Why is #14361 ranked first?\n- Deep dive #14361 \u2014 what are maintainers saying?\n- What MCP issues hurt most?\n- code_scout: McpTrigger",
         "height": 260,
         "width": 480,
         "color": 4
@@ -20,7 +20,9 @@
     },
     {
       "parameters": {
-        "options": {}
+        "options": {
+          "httpMethods": "POST"
+        }
       },
       "id": "3ebf2174-1c9e-48c2-81ac-ca39b6e895b5",
       "name": "Chat Trigger",
@@ -31,6 +33,19 @@
         0
       ],
       "webhookId": "af0e64c2-598e-45f2-b430-318285d3b4e4"
+    },
+    {
+      "parameters": {
+        "jsCode": "const secret = $env.LEVERAGE_COPILOT_SECRET;\nif (secret) {\n  const header = $getWebhookHeader('x-leverage-secret') ?? '';\n  if (header !== secret) throw new Error('Unauthorized: missing or invalid x-leverage-secret header');\n}\nreturn $json;"
+      },
+      "id": "check-auth-0000-0000-000000000000",
+      "name": "Check Auth",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        140,
+        0
+      ]
     },
     {
       "parameters": {
@@ -313,6 +328,17 @@
   ],
   "connections": {
     "Chat Trigger": {
+      "main": [
+        [
+          {
+            "node": "Check Auth",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Auth": {
       "main": [
         [
           {

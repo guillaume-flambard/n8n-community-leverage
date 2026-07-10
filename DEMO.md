@@ -35,6 +35,9 @@
 > Si le vector store est vide (après restart n8n) : exécuter une fois
 > **Leverage — index bootstrap (run once)** (~6 min, 442 docs issues + PRs).
 >
+> > **Auth du copilot :** si `LEVERAGE_COPILOT_SECRET` est défini dans l'environnement n8n,
+> le copilot exige un header `x-leverage-secret` correspondant. Non défini = accès libre (dev).
+>
 > **Setup du fichier de bootstrap :**
 > ```bash
 > # Copier le fichier de vecteurs dans le volume Docker n8n
@@ -72,6 +75,7 @@ Réponses pré-écrites depuis [BRIEFS.md](BRIEFS.md) thème **agent / tool / me
 | Artefact | URL |
 |----------|-----|
 | Repo leverage | https://github.com/guillaume-flambard/n8n-community-leverage |
+| CI pipeline | https://github.com/guillaume-flambard/n8n-community-leverage/actions |
 | PR n8n | https://github.com/n8n-io/n8n/pull/33785 |
 | n8n instance | https://n8n.phangan.ai (chat copilot si accès donné) |
 

@@ -2,9 +2,11 @@
 
 **I don't just prioritize n8n's backlog — I turn it into contributions.**
 
+[![CI](https://github.com/guillaume-flambard/n8n-community-leverage/actions/workflows/ci.yml/badge.svg)](https://github.com/guillaume-flambard/n8n-community-leverage/actions/workflows/ci.yml)
 [![PR #33785 — MCP Headers](https://img.shields.io/badge/PR-%2333785-blue?logo=github)](https://github.com/n8n-io/n8n/pull/33785)
 [![Issues analyzed](https://img.shields.io/badge/issues-427-blue)](#)
-[![Live workflows](https://img.shields.io/badge/workflows-9%20live-success)](#)
+[![Live workflows](https://img.shields.io/badge/workflows-10%20live-success)](#)
+[![Tests](https://img.shields.io/badge/tests-17%2F17-brightgreen)](#)
 
 Built as a work sample for **n8n Community Engineer**. Ranks the entire open backlog
 (427 issues + 1029 PRs) by **leverage** — severity × reach × recency — so maintainers
@@ -29,10 +31,10 @@ briefs via local LLM. All running as n8n workflows on a VPS.
 
 | Requirement | Evidence |
 |---|---|
-| **TS/Node proficiency** | PR #33785 merged clean, 24/24 tests green. Full monorepo toolchain (pnpm, Turborepo). |
+| **TS/Node proficiency** | PR #33785 merged clean, 24/24 tests green. CI pipeline runs typecheck + 17 unit tests on push. Full monorepo toolchain (pnpm, Turborepo). |
 | **Debugging + API/OAuth** | Echo Travel prod — Omise API payment fix, OAuth debugging, monitoring. |
 | **Open-source contribution** | Real upstream PR. Backlog analysis. Community-facing tooling. |
-| **Tooling/automation** | 9 n8n workflows, local LLM pipeline, semantic clustering (139 themes, no "Other"). |
+| **Tooling/automation** | 10 n8n workflows, local LLM pipeline, semantic clustering (139 themes, no "Other"). |
 | **Written communication** | PR comments, briefs, README, demo script. Async-native. |
 
 ---
@@ -81,7 +83,8 @@ old popular issues that quietly bleed community trust.
 | **Code scout** | [`workflows/leverage-code-scout-workflow.json`](workflows/leverage-code-scout-workflow.json) | GitHub code search (read-only) |
 | **Error handler** | [`workflows/leverage-error-handler-workflow.json`](workflows/leverage-error-handler-workflow.json) | Discord alerts on any workflow failure |
 
-All workflows: error handler connected, timezone Europe/Paris, async-safe.
+All workflows: error handler connected, timezone Europe/Paris, async-safe, executionOrder v2.
+The copilot chat trigger is restricted to POST and supports optional auth via `LEVERAGE_COPILOT_SECRET` env var (`x-leverage-secret` header).
 
 ---
 
