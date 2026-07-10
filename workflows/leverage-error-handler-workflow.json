@@ -1,0 +1,120 @@
+{
+  "id": "G8zsc6ebrw5ZZBiz",
+  "name": "\u26a0\ufe0f Error handler \u2014 Discord alerts",
+  "nodes": [
+    {
+      "id": "e1111111-1111-4111-8111-111111111111",
+      "name": "On any workflow error",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        -320,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "e2222222-2222-4222-8222-222222222222",
+      "name": "Build Discord alert",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -80,
+        0
+      ],
+      "parameters": {
+        "jsCode": "// Shape a rich Discord embed from the Error Trigger payload.\nconst d = $input.first().json;\nconst wf = d.workflow || {};\nconst ex = d.execution || {};\nconst err = ex.error || {};\n\nconst payload = {\n  username: 'n8n alerts',\n  embeds: [\n    {\n      title: `\ud83d\udea8 Workflow failed \u2014 ${wf.name || 'unknown'}`,\n      url: ex.url || undefined,\n      color: 15158332, // red\n      timestamp: new Date().toISOString(),\n      fields: [\n        { name: 'Failed node', value: '`' + (ex.lastNodeExecuted || 'n/a') + '`', inline: true },\n        { name: 'Mode', value: ex.mode || 'n/a', inline: true },\n        { name: 'Execution', value: ex.url ? `[open #${ex.id}](${ex.url})` : String(ex.id || 'n/a'), inline: true },\n        { name: 'Error', value: '```' + String(err.message || 'no message').slice(0, 1000) + '```' },\n      ],\n      footer: { text: `n8n.phangan.ai \u2022 wf ${wf.id || ''}` },\n    },\n  ],\n};\nreturn [{ json: payload }];"
+      }
+    },
+    {
+      "id": "e4444444-4444-4444-8444-444444444444",
+      "name": "About this workflow",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -340,
+        -240
+      ],
+      "parameters": {
+        "content": "## \u26a0\ufe0f Central error handler\n\nSet as the **Error Workflow** for other workflows (Settings \u2192 Error Workflow). When any of them fails, n8n fires this and a red **Discord embed** lands instantly \u2014 failed node, error message, and a one-click link to the execution.\n\nNative **Discord node** (Bot Token auth) posts to #n8n-alerts. One-time: attach the **Discord Bot API** credential to the *Send Discord alert* node.",
+        "height": 200,
+        "width": 460,
+        "color": 2
+      }
+    },
+    {
+      "id": "29e531df-7232-4d21-bb96-6153512f400d",
+      "name": "Send Discord alert",
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        160,
+        0
+      ],
+      "parameters": {
+        "authentication": "botToken",
+        "resource": "message",
+        "operation": "send",
+        "guildId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "1070165279537102911",
+          "cachedResultName": "Serveur de zoanlogia"
+        },
+        "channelId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "1524164175675527300",
+          "cachedResultName": "n8n-alerts"
+        },
+        "embeds": {
+          "values": [
+            {
+              "inputMethod": "json",
+              "json": "={{ JSON.stringify($json.embeds[0]) }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "webhookId": "1b9983d6-a292-452f-9760-9b7fb12f4187",
+      "credentials": {
+        "discordBotApi": {
+          "id": "",
+          "name": "Discord Bot"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "On any workflow error": {
+      "main": [
+        [
+          {
+            "node": "Build Discord alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Discord alert": {
+      "main": [
+        [
+          {
+            "node": "Send Discord alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v2",
+    "timezone": "Europe/Paris"
+  }
+}

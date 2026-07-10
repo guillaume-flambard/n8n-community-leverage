@@ -79,6 +79,7 @@ old popular issues that quietly bleed community trust.
 | **Issue deep dive** | [`workflows/leverage-deep-dive-workflow.json`](workflows/leverage-deep-dive-workflow.json) | Thread synthesis + contributor proposal |
 | **Issue PR linker** | [`workflows/leverage-issue-linker-workflow.json`](workflows/leverage-issue-linker-workflow.json) | Find PRs mentioning an issue |
 | **Code scout** | [`workflows/leverage-code-scout-workflow.json`](workflows/leverage-code-scout-workflow.json) | GitHub code search (read-only) |
+| **Error handler** | [`workflows/leverage-error-handler-workflow.json`](workflows/leverage-error-handler-workflow.json) | Discord alerts on any workflow failure |
 
 All workflows: error handler connected, timezone Europe/Paris, async-safe.
 

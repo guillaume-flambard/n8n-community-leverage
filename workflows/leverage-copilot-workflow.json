@@ -435,7 +435,7 @@
     }
   },
   "settings": {
-    "executionOrder": "v1",
+    "executionOrder": "v2",
     "timezone": "Europe/Paris",
     "errorWorkflow": "G8zsc6ebrw5ZZBiz",
     "binaryMode": "separate"

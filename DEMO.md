@@ -34,6 +34,12 @@
 
 > Si le vector store est vide (après restart n8n) : exécuter une fois
 > **Leverage — index bootstrap (run once)** (~6 min, 442 docs issues + PRs).
+>
+> **Setup du fichier de bootstrap :**
+> ```bash
+> # Copier le fichier de vecteurs dans le volume Docker n8n
+> docker cp data/vector_documents.json n8n:/home/node/.n8n/leverage_docs.json
+> ```
 
 ### Acte 3 — Contribution code (1 min)
 

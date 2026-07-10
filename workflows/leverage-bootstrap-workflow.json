@@ -32,7 +32,7 @@
     {
       "parameters": {
         "operation": "read",
-        "fileSelector": "/home/node/.n8n-files/leverage_docs.json",
+        "fileSelector": "/home/node/.n8n/leverage_docs.json",
         "options": {}
       },
       "id": "646fe3a3-66e3-47e6-a06c-745c772c7e12",
@@ -171,6 +171,6 @@
     }
   },
   "settings": {
-    "executionOrder": "v1"
+    "executionOrder": "v2"
   }
 }
