@@ -55,7 +55,7 @@ multi.slice(0, 8).forEach((c) => {
 md += `---\n\n### Method\n`;
 md += `- **Local embeddings:** each issue (title + body) embedded with \`nomic-embed-text\` via ollama. No API key, no egress, no external DB.\n`;
 md += `- **Greedy clustering:** issues sorted by leverage seed clusters; each subsequent issue joins the nearest seed above cosine ${THRESH}, else starts a new theme.\n`;
-md += `- **Production seam:** same normalized vectors drop into pgvector unchanged; greedy clustering becomes an ANN query. Threshold ${THRESH} tunes granularity.\n`;
+md += `- **Production seam:** same normalized vectors drop into pgvector unchanged; the greedy seed-based scan can be replaced by an IVFFlat ANN index on centroid kicks followed by local reassignment. Threshold ${THRESH} tunes granularity.\n`;
 
 writeFileSync(join(HERE, '..', 'REPORT_v2.md'), md);
 

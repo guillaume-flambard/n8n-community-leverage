@@ -89,4 +89,4 @@ _Local embeddings (nomic-embed-text via ollama), fixed 2026-07-07 clock. Nothing
 ### Method
 - **Local embeddings:** each issue (title + body) embedded with `nomic-embed-text` via ollama. No API key, no egress, no external DB.
 - **Greedy clustering:** issues sorted by leverage seed clusters; each subsequent issue joins the nearest seed above cosine 0.74, else starts a new theme.
-- **Production seam:** same normalized vectors drop into pgvector unchanged; greedy clustering becomes an ANN query. Threshold 0.74 tunes granularity.
+- **Production seam:** same normalized vectors drop into pgvector unchanged; the greedy seed-based scan can be replaced by an IVFFlat ANN index on centroid kicks followed by local reassignment. Threshold 0.74 tunes granularity.

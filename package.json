@@ -5,8 +5,16 @@
   "type": "module",
   "scripts": {
     "start": "node src/leverage.ts",
+    "start:v2": "node src/leverage_v2.ts",
+    "briefs": "node src/briefs.ts",
     "fetch": "gh api --paginate --slurp '/repos/n8n-io/n8n/issues?state=open&per_page=100' > data/issues_raw.json && gh api --paginate --slurp '/repos/n8n-io/n8n/pulls?state=open&per_page=100' > data/pulls_raw.json",
-    "export:docs": "node src/export_vector_docs.ts"
+    "export:docs": "node src/export_vector_docs.ts",
+    "test": "node --experimental-test-coverage --test src/**/*.test.ts",
+    "typecheck": "tsc --noEmit"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "~5.8.0"
+  }
 }

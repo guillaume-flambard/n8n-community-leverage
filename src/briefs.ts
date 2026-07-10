@@ -12,7 +12,7 @@
 import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { loadBacklog, HERE, gh, type Scored } from './lib.ts';
-import { embedAll, clusterBySeed, nameCluster, type Cluster } from './cluster.ts';
+import { embedAll, clusterBySeed, nameCluster } from './cluster.ts';
 
 const GEN = 'http://localhost:11434/api/generate';
 const MODEL = process.env.BRIEF_MODEL ?? 'llama3.2:3b'; // 3b is light + won't OOM; set BRIEF_MODEL=qwen3.5:9b for higher quality if you have the RAM
