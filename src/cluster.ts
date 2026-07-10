@@ -5,9 +5,8 @@
  */
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { DATA, type Scored } from './lib.ts';
+import { DATA, ollamaFetch, ollamaHealthCheck, type Scored } from './lib.ts';
 
-const OLLAMA = 'http://localhost:11434/api/embeddings';
 const MODEL = 'nomic-embed-text';
 const CACHE = join(DATA, 'embeddings.json');
 
@@ -25,18 +24,13 @@ export const cosine = (a: number[], b: number[]) => {
   return s; // inputs normalized
 };
 
-async function embedOne(text: string): Promise<number[]> {
-  const res = await fetch(OLLAMA, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ model: MODEL, prompt: `clustering: ${text}` }),
-  });
-  if (!res.ok) throw new Error(`ollama ${res.status}`);
-  const j = (await res.json()) as { embedding: number[] };
-  return normalize(j.embedding);
+export async function embedOne(text: string): Promise<number[]> {
+  const { embedding } = await ollamaFetch<{ embedding: number[] }>('embeddings', { model: MODEL, prompt: `clustering: ${text}` });
+  return normalize(embedding);
 }
 
 export async function embedAll(items: Scored[]): Promise<Map<number, number[]>> {
+  await ollamaHealthCheck();
   const cache: Record<string, number[]> = existsSync(CACHE) ? JSON.parse(readFileSync(CACHE, 'utf8')) : {};
   const out = new Map<number, number[]>();
   const todo = items.filter((i) => !cache[i.number]);

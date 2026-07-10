@@ -12,10 +12,10 @@
  */
 import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { loadBacklog, HERE, gh } from './lib.ts';
+import { loadBacklog, HERE, gh, parseNum } from './lib.ts';
 import { embedAll, clusterBySeed, nameCluster } from './cluster.ts';
 
-const THRESH = Number(process.env.THRESH ?? 0.74);
+const THRESH = parseNum(process.env.THRESH, 0.74, 0, 1);
 
 const { issues } = loadBacklog();
 const emb = await embedAll(issues);

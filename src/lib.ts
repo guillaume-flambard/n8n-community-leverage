@@ -11,7 +11,42 @@ export const DATA = join(HERE, '..', 'data');
 
 export const NOW = Date.parse('2026-07-07T00:00:00Z'); // fixed clock for reproducibility
 const DAY = 86_400_000;
-const daysBetween = (a: number, b: number) => Math.max(0, (a - b) / DAY);
+export const daysBetween = (a: number, b: number) => Math.max(0, (a - b) / DAY);
+
+export const OLLAMA_BASE = 'http://localhost:11434/api';
+
+export function parseNum(val: string | undefined, fallback: number, lo?: number, hi?: number): number {
+  if (val === undefined) return fallback;
+  const n = Number(val);
+  if (!Number.isFinite(n)) throw new Error(`Invalid numeric value: "${val}"`);
+  if (lo !== undefined && n < lo) throw new Error(`Value ${n} is below minimum ${lo}`);
+  if (hi !== undefined && n > hi) throw new Error(`Value ${n} is above maximum ${hi}`);
+  return n;
+}
+
+export async function ollamaHealthCheck(): Promise<void> {
+  const res = await fetch(`${OLLAMA_BASE}/tags`, { signal: AbortSignal.timeout(5000) });
+  if (!res.ok) throw new Error(`Ollama health check failed (${res.status})`);
+}
+
+export async function ollamaFetch<T>(endpoint: string, body: Record<string, unknown>, retries = 2): Promise<T> {
+  for (let i = 0; i <= retries; i++) {
+    try {
+      const res = await fetch(`${OLLAMA_BASE}/${endpoint}`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(60_000),
+      });
+      if (!res.ok) throw new Error(`ollama ${endpoint} ${res.status}`);
+      return (await res.json()) as T;
+    } catch (e) {
+      if (i === retries) throw e;
+      await new Promise((r) => setTimeout(r, 2000 * (i + 1)));
+    }
+  }
+  throw new Error('unreachable');
+}
 
 type Label = { name: string };
 type RawItem = {

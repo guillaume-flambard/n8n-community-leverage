@@ -11,13 +11,12 @@
  */
 import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { loadBacklog, HERE, gh, type Scored } from './lib.ts';
+import { loadBacklog, HERE, gh, parseNum, ollamaFetch, ollamaHealthCheck, type Scored } from './lib.ts';
 import { embedAll, clusterBySeed, nameCluster } from './cluster.ts';
 
-const GEN = 'http://localhost:11434/api/generate';
 const MODEL = process.env.BRIEF_MODEL ?? 'llama3.2:3b'; // 3b is light + won't OOM; set BRIEF_MODEL=qwen3.5:9b for higher quality if you have the RAM
-const THRESH = Number(process.env.THRESH ?? 0.74);
-const TOP_THEMES = Number(process.env.TOP ?? 6);
+const THRESH = parseNum(process.env.THRESH, 0.74, 0, 1);
+const TOP_THEMES = Math.max(1, parseNum(process.env.TOP, 6, 1));
 
 // Real, verified code entry points for themes I have mapped by hand. These are
 // injected as authoritative, separate from the LLM's hypotheses.
@@ -29,19 +28,13 @@ const KNOWN_ENTRIES: { match: RegExp; note: string }[] = [
 ];
 
 async function generate(prompt: string): Promise<string> {
-  const res = await fetch(GEN, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({
-      model: MODEL,
-      prompt,
-      stream: false,
-      options: { temperature: 0.2, num_ctx: 8192 },
-    }),
+  const { response } = await ollamaFetch<{ response: string }>('generate', {
+    model: MODEL,
+    prompt,
+    stream: false,
+    options: { temperature: 0.2, num_ctx: 8192 },
   });
-  if (!res.ok) throw new Error(`ollama generate ${res.status}`);
-  const j = (await res.json()) as { response: string };
-  return j.response.trim();
+  return response.trim();
 }
 
 function promptFor(theme: string, members: Scored[]): string {
@@ -64,6 +57,8 @@ Write a concise contributor brief in Markdown with EXACTLY these sections:
 
 Be specific and technical. Admit uncertainty rather than guessing. Do not add sections beyond these five. Keep the whole brief under 220 words.`;
 }
+
+await ollamaHealthCheck();
 
 const { issues } = loadBacklog();
 const emb = await embedAll(issues);

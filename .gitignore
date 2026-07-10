@@ -1,3 +1,7 @@
-data/*.json
-data/*.log
 node_modules/
+.pnpm-store/
+data/embeddings.json
+data/issues_raw.json
+data/pulls_raw.json
+data/vector_documents.json
+*.log
