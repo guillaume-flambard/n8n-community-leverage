@@ -4,4 +4,6 @@ data/embeddings.json
 data/issues_raw.json
 data/pulls_raw.json
 data/vector_documents.json
+workflows/.copilot-live-backup.json
+bot/.env
 *.log

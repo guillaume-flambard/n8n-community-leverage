@@ -20,7 +20,8 @@ briefs via local LLM. All running as n8n workflows on a VPS.
 | What | Link |
 |------|------|
 | Upstream PR (merged tests, CI green) | [#33785](https://github.com/n8n-io/n8n/pull/33785) |
-| Live chat copilot | [n8n.phangan.ai](https://n8n.phangan.ai) |
+| Live copilot — ask from Discord `#copilot` | thin relay bot → n8n webhook ([`bot/`](bot/)) |
+| n8n editor | [n8n.phangan.ai](https://n8n.phangan.ai) |
 | Demo script | [DEMO.md](DEMO.md) |
 | Latest ranked report | [REPORT.md](REPORT.md) |
 | Contributor briefs | [BRIEFS.md](BRIEFS.md) |
@@ -42,7 +43,9 @@ briefs via local LLM. All running as n8n workflows on a VPS.
 ## Architecture
 
 ```
-GitHub API ──→ Leverage formula ──→ Data Tables ──→ Chat Copilot (7 tools)
+Discord #copilot ─(relay bot)─→ POST /webhook/copilot ─┐
+                                                       ↓
+GitHub API ──→ Leverage formula ──→ Data Tables ──→ Copilot Router (7 tools)
                    │                                    │
                    ↓                                    ↓
             Semantic clusters                    AI Agent + Ollama
@@ -75,7 +78,7 @@ old popular issues that quietly bleed community trust.
 | Workflow | File | What it does |
 |----------|------|-------------|
 | **Daily ranking** | [`workflows/leverage-workflow.json`](workflows/leverage-workflow.json) | Schedule 08:00 → GitHub issues + PRs → Data Table upsert |
-| **Chat copilot** | [`workflows/leverage-copilot-workflow.json`](workflows/leverage-copilot-workflow.json) | AI Agent + 7 tools (semantic search, ranking, comment thread, deep-dive, PR linker, code scout) + Ollama |
+| **Copilot Router** | [`workflows/leverage-copilot-workflow.json`](workflows/leverage-copilot-workflow.json) | Webhook → AI Agent + 7 tools (semantic search, ranking, comment thread, deep-dive, PR linker, code scout) + Ollama, fronted by Discord |
 | **Index bootstrap** | [`workflows/leverage-bootstrap-workflow.json`](workflows/leverage-bootstrap-workflow.json) | Load 442 docs into vector store |
 | **Fetch comments** | [`workflows/leverage-fetch-comments-workflow.json`](workflows/leverage-fetch-comments-workflow.json) | Comment thread on demand |
 | **Issue deep dive** | [`workflows/leverage-deep-dive-workflow.json`](workflows/leverage-deep-dive-workflow.json) | Thread synthesis + contributor proposal |
@@ -84,7 +87,17 @@ old popular issues that quietly bleed community trust.
 | **Error handler** | [`workflows/leverage-error-handler-workflow.json`](workflows/leverage-error-handler-workflow.json) | Discord alerts on any workflow failure |
 
 All workflows: error handler connected, timezone Europe/Paris, async-safe, executionOrder v2.
-The copilot chat trigger is restricted to POST and supports optional auth via `LEVERAGE_COPILOT_SECRET` env var (`x-leverage-secret` header).
+
+### Discord surface
+
+The copilot is fronted by a plain **Webhook** (`POST /webhook/copilot` with `{ message, user }`),
+with optional auth via `LEVERAGE_COPILOT_SECRET` (`x-leverage-secret` header). A ~50-line
+Discord relay bot ([`bot/`](bot/)) lets you just type in **#copilot** — one channel, no
+commands. The AI Agent routes intent itself (ranking vs. thread question vs. general), so
+`ranking` and `why is #14361 ranked first?` both just work.
+
+This replaces the earlier Chat Trigger front door, which required an SSE handshake
+(GET to open a session, then POST) and so was unusable from a simple client.
 
 ---
 

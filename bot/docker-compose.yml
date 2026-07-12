@@ -1,0 +1,23 @@
+# Reference deploy for leverage-copilot-bot.
+#
+# On the VPS, merge this `leverage-copilot-bot` service into the existing
+# /root/docker-compose.yml so the bot shares n8n's Docker network and can reach
+# n8n over the internal hostname (N8N_WEBHOOK_URL=http://n8n:5678/webhook/copilot).
+#
+# To run it standalone against an already-running n8n compose stack, set the
+# external network name below to n8n's actual network:
+#   docker network ls | grep n8n     # e.g. root_default
+#   docker compose up -d --build
+services:
+  leverage-copilot-bot:
+    build: .
+    container_name: leverage-copilot-bot
+    restart: unless-stopped
+    env_file: .env
+    networks:
+      - n8n_network
+
+networks:
+  n8n_network:
+    external: true
+    name: root_default   # <-- replace with the result of `docker network ls | grep n8n`

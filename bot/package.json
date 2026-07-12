@@ -1,0 +1,17 @@
+{
+  "name": "leverage-copilot-bot",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Discord relay for the Leverage Copilot n8n webhook",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "discord.js": "^14.16.3"
+  }
+}

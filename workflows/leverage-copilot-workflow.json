@@ -4,7 +4,7 @@
   "nodes": [
     {
       "parameters": {
-        "content": "## Leverage Copilot\n\nChat with the **live n8n backlog**. Vector search (issues + PRs) + ranking tables + **comment deep-dive**.\n\n**Auth:** Set `LEVERAGE_COPILOT_SECRET` env var and pass as `x-leverage-secret` header. Unset = open access (dev only).\n\n**Demo:**\n- Why is #14361 ranked first?\n- Deep dive #14361 \u2014 what are maintainers saying?\n- What MCP issues hurt most?\n- code_scout: McpTrigger",
+        "content": "## Leverage Copilot\n\nChat with the **live n8n backlog**. Vector search (issues + PRs) + ranking tables + **comment deep-dive**.\n\n**Front door:** `POST /webhook/copilot` with `{ message, user }`. Fronted by Discord **#copilot** via a thin relay bot (`bot/`).\n\n**Auth:** Set `LEVERAGE_COPILOT_SECRET` env var and pass as `x-leverage-secret` header. Unset = open access (dev only).\n\n**Demo:**\n- Why is #14361 ranked first?\n- Deep dive #14361 \u2014 what are maintainers saying?\n- What MCP issues hurt most?\n- code_scout: McpTrigger",
         "height": 260,
         "width": 480,
         "color": 4
@@ -20,14 +20,15 @@
     },
     {
       "parameters": {
-        "options": {
-          "httpMethods": "POST"
-        }
+        "httpMethod": "POST",
+        "path": "copilot",
+        "responseMode": "responseNode",
+        "options": {}
       },
       "id": "3ebf2174-1c9e-48c2-81ac-ca39b6e895b5",
-      "name": "Chat Trigger",
-      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
-      "typeVersion": 1.1,
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
       "position": [
         0,
         0
@@ -36,7 +37,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const secret = $env.LEVERAGE_COPILOT_SECRET;\nif (secret) {\n  const header = $getWebhookHeader('x-leverage-secret') ?? '';\n  if (header !== secret) throw new Error('Unauthorized: missing or invalid x-leverage-secret header');\n}\nreturn $json;"
+        "jsCode": "const secret = $env.LEVERAGE_COPILOT_SECRET;\nif (secret) {\n  const header = $json.headers?.['x-leverage-secret'] ?? '';\n  if (header !== secret) throw new Error('Unauthorized: missing or invalid x-leverage-secret header');\n}\nreturn $json;"
       },
       "id": "check-auth-0000-0000-000000000000",
       "name": "Check Auth",
@@ -49,6 +50,8 @@
     },
     {
       "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.body.message }}",
         "options": {
           "systemMessage": "You are the n8n Community Leverage Copilot \u2014 an assistant for maintainers and contributors triaging the n8n-io/n8n open backlog.\n\nYou have tools:\n1. **issue_search** \u2014 semantic search across ~440 open issues + top community PRs.\n2. **top_ranking** \u2014 live top-25 issues by leverage (daily 08:00 Europe/Paris).\n3. **top_prs** \u2014 top community PRs to review first.\n4. **fetch_comments** \u2014 read the comment thread on a specific issue (pass issue number).\n5. **issue_deep_dive** \u2014 synthesize thread + propose contributor approach (pass issue number).\n6. **issue_pr_linker** \u2014 find open PRs mentioning an issue (pass issue number).\n7. **code_scout** \u2014 search n8n-io/n8n codebase for file paths (read-only, pass search terms).\n\nWhen answering:\n- Cite GitHub issue/PR numbers and URLs (/issues/ vs /pull/).\n- Mention leverage when relevant.\n- For contributor questions, use issue_deep_dive on the top issue.\n- Top pain theme: **AI Agent / tool / memory** (e.g. #14361).\n- Be concise. Bullet points for lists.\n\nIf vector index was cleared, tell user to run \"Leverage \u2014 index bootstrap\" once."
         }
@@ -64,7 +67,7 @@
     },
     {
       "parameters": {
-        "sessionKey": "={{ $json.sessionId }}",
+        "sessionKey": "={{ $json.body.user || 'discord' }}",
         "contextWindowLength": 8
       },
       "id": "0d424227-faa4-4f63-b386-30bc0244da60",
@@ -324,14 +327,40 @@
         520,
         200
       ]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.output }}",
+        "options": {}
+      },
+      "id": "respond-webhook-0000-0000-000000000000",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        520,
+        360
+      ]
     }
   ],
   "connections": {
-    "Chat Trigger": {
+    "Webhook": {
       "main": [
         [
           {
             "node": "Check Auth",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
             "type": "main",
             "index": 0
           }
