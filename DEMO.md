@@ -32,17 +32,25 @@
 5. Optionnel : *"Find PRs linked to #14361"* → `issue_pr_linker`
 6. Phrase : *"Un agent, sept tools — vector search, ranking live, commentaires GitHub, deep-dive LLM."*
 
-> Si le vector store est vide (après restart n8n) : exécuter une fois
-> **Leverage — index bootstrap (run once)** (~6 min, 442 docs issues + PRs).
+> ⚠️ **Le vector store est vidé à CHAQUE restart du processus n8n** (`vectorStoreInMemory` =
+> singleton en mémoire, zéro persistance disque). Après tout restart : exécuter une fois
+> **Leverage — index bootstrap (run once)** (~4-5 min, 427 docs issues + PRs).
+> Le schedule quotidien 04:00 le refait seul, mais un restart après 04:00 revide tout.
+> **Avant la démo : lancer le bootstrap à la main et attendre la fin.**
 >
-> > **Auth du copilot :** si `LEVERAGE_COPILOT_SECRET` est défini dans l'environnement n8n,
-> le copilot exige un header `x-leverage-secret` correspondant. Non défini = accès libre (dev).
+> > **Auth du copilot :** le nœud `Check Auth` (qui portait `LEVERAGE_COPILOT_SECRET`) a été
+> > retiré le 2026-07-11. Le chat n'est PAS public (`public: false` → 404 en production), donc
+> > accessible uniquement via l'onglet Chat de l'éditeur. Ne pas passer `public: true` sans
+> > remettre une auth : agent LLM + 7 tools GitHub exposés sans gate.
 >
 > **Setup du fichier de bootstrap :**
 > ```bash
-> # Copier le fichier de vecteurs dans le volume Docker n8n
-> docker cp data/vector_documents.json n8n:/home/node/.n8n/leverage_docs.json
+> # Le workflow lit /home/node/.n8n-files/ — PAS /home/node/.n8n/ (chemin restreint par n8n).
+> docker cp data/vector_documents.json n8n:/home/node/.n8n-files/leverage_docs.json
 > ```
+> ⚠️ `/home/node/.n8n-files/` n'est **pas** un volume : il vit dans le filesystem du container et
+> meurt à chaque `docker rm`/recreate. Copie de secours persistante : `/root/n8n-files/` sur l'hôte.
+> Fix durable (après le 22/07) : bind-mount `/root/n8n-files:/home/node/.n8n-files`.
 
 ### Acte 3 — Contribution code (1 min)
 
