@@ -12,6 +12,7 @@
     "test": "node --experimental-test-coverage --test src/**/*.test.ts",
     "typecheck": "tsc --noEmit"
   },
+  "packageManager": "pnpm@10.14.0",
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^22.0.0",
