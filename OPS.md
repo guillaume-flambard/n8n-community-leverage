@@ -78,75 +78,43 @@ Note: Cloudflare may challenge bot requests. Works fine from browsers.
 
 ---
 
-## CRITICAL: Switch to OpenRouter (DO THIS BEFORE DEMO)
+## LLM Provider: Groq Free Tier (DONE — switched 2026-07-19)
 
-Ollama on CPU = 2+ minutes per response. Unusable for live demo.
-The VPS also runs Echo Travel — Ollama eats its RAM/CPU.
+Ollama on CPU was 2+ min/response. Switched to Groq free tier (llama-3.1-8b-instant).
 
-### Step 1: Add credits to OpenRouter
+**Current state**: Both copilot + deep dive use Groq via credential `Groq (free tier)` (ID: WScor4TELbr5bEwC).
 
-1. Go to https://openrouter.ai/credits
-2. Add $5 (enough for hundreds of demo queries)
+### Architecture after switch
 
-### Step 2: Switch the copilot LLM back to OpenRouter
+- **Copilot LLM** (workflow `XtV6NerjQnYPtXgz`): node "OpenRouter Chat Model" uses `lmChatOpenAi` v1.2 pointing to Groq credential
+- **Deep dive** (workflow `KjC9Bq8HnsxwyRpg`): 5-node pipeline using HTTP Request nodes with Groq credential:
+  1. "Build Synth Prompt" (Code) — assembles issue + comments into synthesis prompt
+  2. "Groq Synthesis" (HTTP Request) — calls Groq with credential auth
+  3. "Build Propose Prompt" (Code) — takes synthesis, builds proposal prompt
+  4. "Groq Proposal" (HTTP Request) — calls Groq with credential auth
+  5. "Format Output" (Code) — combines into final markdown
 
-In n8n editor, workflow "Leverage Copilot — ask the backlog":
+### Groq free tier limits
 
-1. Click node **"OpenRouter Chat Model"** (it's actually Ollama right now despite the name)
-2. Change type back to: `Chat OpenRouter` (or HTTP Request to OpenRouter API)
-3. Model: `google/gemini-flash-1.5` (fast + cheap) or `meta-llama/llama-3.1-8b-instruct`
-4. Credential: select your OpenRouter API credential
-5. Save + Publish (Ctrl+S, then click "Save" on the orange dot)
+- 14,400 requests/day
+- 30 requests/min
+- **6,000 tokens/min (TPM)** — main constraint for demo
+- Wait ~10s between requests to avoid rate limit
+- Model: `llama-3.1-8b-instant`
 
-### Step 3: Switch the deep dive synthesis to OpenRouter
+### Performance (tested 2026-07-19)
 
-Workflow "Leverage — issue deep dive tool" (`KjC9Bq8HnsxwyRpg`):
+- End-to-end copilot response: **3.5s**
+- Deep dive sub-workflow: **2.3s**
+- Groq synthesis call: ~800ms
+- Groq proposal call: ~630ms
 
-1. Open the **"Synthesize and propose"** Code node
-2. Replace the Ollama API calls:
+### If you need to switch to another provider later
 
-**Current (Ollama):**
-```javascript
-const synth = await this.helpers.httpRequest({
-  method: 'POST',
-  url: 'http://10.0.0.2:11434/api/chat',
-  body: { model: 'qwen2.5:7b', messages: [...], stream: false },
-  json: true,
-});
-const synthResponse = synth.message?.content || '';
-```
-
-**Replace with (OpenRouter):**
-```javascript
-const synth = await this.helpers.httpRequest({
-  method: 'POST',
-  url: 'https://openrouter.ai/api/v1/chat/completions',
-  headers: {
-    'Authorization': 'Bearer ' + $env.OPENROUTER_API_KEY,
-    'Content-Type': 'application/json',
-  },
-  body: {
-    model: 'google/gemini-flash-1.5',
-    messages: [{ role: 'user', content: synthPrompt }],
-  },
-  json: true,
-});
-const synthResponse = synth.choices?.[0]?.message?.content || '';
-```
-
-Same change for the proposal call below it.
-
-3. Save + Publish
-
-### Step 4: Test
-
-```bash
-ssh ovh-echo 'curl -s -X POST "http://localhost:5678/webhook/leverage-copilot" \
-  -H "Content-Type: application/json" \
-  -d "{\"chatInput\":\"Hello\"}" --max-time 30'
-```
-
-Should respond in 2-5 seconds now.
+1. Create new credential (type: openAiApi) with new provider's base URL
+2. Update node "OpenRouter Chat Model" credential reference in copilot workflow
+3. Update HTTP Request nodes in deep dive workflow (URL + credential)
+4. Test: `curl -X POST https://n8n.phangan.ai/webhook/leverage-copilot -H "Content-Type: application/json" -d '{"chatInput":"Hello"}' --max-time 30`
 
 ---
 
@@ -262,7 +230,7 @@ trigger must access inputs via `$json.query.<field_name>`.
 
 ---
 
-## Tool status (current)
+## Tool status (updated 2026-07-19)
 
 | Tool | Status | Notes |
 |------|--------|-------|
@@ -270,22 +238,23 @@ trigger must access inputs via `$json.query.<field_name>`.
 | top_ranking | OK | Data Table, no GitHub dependency |
 | top_prs | OK | Data Table, no GitHub dependency |
 | fetch_comments | OK | Unauthenticated, 60 req/hour |
-| issue_deep_dive | OK | Unauthenticated + Ollama synthesis |
+| issue_deep_dive | OK | Unauthenticated + Groq synthesis (2.3s) |
 | issue_pr_linker | OK | Unauthenticated search API |
-| code_scout | BROKEN | Needs valid PAT (GitHub code search requires auth) |
+| code_scout | BROKEN | Needs valid GitHub PAT (/search/code requires auth) |
 
 ---
 
-## Demo checklist (day of interview)
+## Demo checklist (day of interview — 2026-07-22)
 
-- [ ] Add OpenRouter credits ($5)
-- [ ] Switch copilot + deep dive back to OpenRouter (see above)
+- [x] Switch copilot + deep dive to fast LLM (Groq free tier, done 2026-07-19)
+- [x] Fix deep dive Code node → HTTP Request pipeline with credential (done 2026-07-19)
+- [x] Test e2e: copilot 3.5s, deep dive 2.3s (done 2026-07-19)
 - [ ] Regenerate GitHub PAT (fixes code_scout + higher rate limits)
 - [ ] Run bootstrap workflow (vector store reload) if VPS was restarted
 - [ ] Test from editor Chat panel: "Why is #14361 ranked first?"
 - [ ] Test deep dive: "Deep dive #14361"
 - [ ] Test fetch_comments: "Show comments on #14361"
-- [ ] Verify response time < 10 seconds
+- [ ] Space requests by ~10s (Groq TPM limit = 6000)
 - [ ] Avoid using code_scout if PAT not regenerated
 
 ---

@@ -101,23 +101,17 @@ echo "==> [3] shipping relay bot to $SSH_HOST:$REMOTE_BOT_DIR"
 ssh "$SSH_HOST" "mkdir -p $REMOTE_BOT_DIR"
 rsync -az --delete --exclude node_modules --exclude .env "$BOT_DIR"/ "$SSH_HOST:$REMOTE_BOT_DIR/"
 
-# detect n8n's docker network so the bot can reach http://n8n:5678 internally
-NET=$(ssh "$SSH_HOST" "docker inspect -f '{{range \$k,\$v := .NetworkSettings.Networks}}{{\$k}} {{end}}' $N8N_CONTAINER" | awk '{print $1}')
-[ -n "$NET" ] || { echo "could not detect n8n docker network"; exit 1; }
-echo "   n8n network: $NET"
-
 # write the bot .env on the VPS (secrets stay on the box, never in the repo)
+# n8n runs --network host, so bot uses localhost:5678
 ssh "$SSH_HOST" "cat > $REMOTE_BOT_DIR/.env" <<EOF
 DISCORD_BOT_TOKEN=$DISCORD_BOT_TOKEN
 COPILOT_CHANNEL_ID=$COPILOT_CHANNEL_ID
-N8N_WEBHOOK_URL=http://$N8N_CONTAINER:5678/webhook/copilot
+N8N_WEBHOOK_URL=http://localhost:5678/webhook/leverage-copilot
 LEVERAGE_COPILOT_SECRET=$LEVERAGE_COPILOT_SECRET
 REQUEST_TIMEOUT_MS=90000
 EOF
 
-# point the compose external network at the detected network, then build + start
 ssh "$SSH_HOST" "cd $REMOTE_BOT_DIR \
-  && sed -i 's/^    name: .*/    name: $NET/' docker-compose.yml \
   && docker compose up -d --build \
   && docker compose ps"
 
@@ -125,7 +119,6 @@ echo
 echo "==> done."
 echo "    bot logs:  ssh $SSH_HOST 'cd $REMOTE_BOT_DIR && docker compose logs -f'"
 echo "    webhook smoke test:"
-echo "    curl -sS -X POST $N8N_API_URL/webhook/copilot \\"
+echo "    curl -sS -X POST $N8N_API_URL/webhook/leverage-copilot \\"
 echo "      -H 'content-type: application/json' \\"
-echo "      -H \"x-leverage-secret: \$LEVERAGE_COPILOT_SECRET\" \\"
-echo "      -d '{\"message\":\"ranking\"}'"
+echo "      -d '{\"chatInput\":\"Hello\"}'"

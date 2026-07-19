@@ -47,12 +47,14 @@ client.on(Events.MessageCreate, async (message) => {
         'content-type': 'application/json',
         ...(LEVERAGE_COPILOT_SECRET ? { 'x-leverage-secret': LEVERAGE_COPILOT_SECRET } : {}),
       },
-      body: JSON.stringify({ message: content, user: message.author.username }),
+      body: JSON.stringify({ chatInput: content, sessionId: `discord-${message.author.id}` }),
       signal: controller.signal,
     });
     if (!res.ok) throw new Error(`n8n responded ${res.status}`);
-    const answer = (await res.text()).trim();
-    await reply(message, answer || 'Empty response from copilot.');
+    const raw = await res.text();
+    let answer;
+    try { answer = JSON.parse(raw).output; } catch { answer = raw; }
+    await reply(message, (answer || '').trim() || 'Empty response from copilot.');
   } catch (err) {
     console.error('copilot request failed:', err);
     await reply(message, '⚠️ erreur, réessaie.');
