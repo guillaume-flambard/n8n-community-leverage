@@ -229,19 +229,35 @@ To restore auth (more reliable for demo):
   - `fetch_comments` (`8vGd2e5vuyAi0u0V`): GitHub comments node
   - `issue_pr_linker` (`wzKasDRdfp8VgUI7`): Search linked PRs node
 
-### 8. Sub-workflows accessing wrong JSON path (`$json.query.xxx`)
+### 8. CRITICAL: toolWorkflow v2.2 data path is `$json.query.xxx`
 
-**Symptom**: Tools return "Provide a GitHub issue number" even when one is passed
-**Cause**: `issue_pr_linker` and `code_scout` Code nodes accessed `$json.query.issue_number`
-  instead of `$json.issue_number`. The `query` wrapper doesn't exist — toolWorkflow v2.2 with
-  `defineBelow` sends fields directly to `passthrough` triggers.
-**Fix**: Removed `.query.` prefix in URL expressions and Code node jsCode for both workflows.
+**Symptom**: GitHub Get Issue called with literal `$fromAI(...)` string in URL → 404
+**Root cause discovered via execution 279 error data**:
+
+toolWorkflow v2.2 `defineBelow` sends data to `passthrough` triggers as:
+```json
+{
+  "query": { "issue_number": "14361" },                    // ← ACTUAL VALUE
+  "issue_number": "{ $fromAI('issue_number', ...) }"       // ← LITERAL EXPRESSION (not evaluated)
+}
+```
+
+**All sub-workflows MUST use `$json.query.xxx`**, not `$json.xxx`.
+
+**Fix**: Changed ALL 4 sub-workflows to use `.query.` path:
+  - `deep_dive` (`KjC9Bq8HnsxwyRpg`): URL + Code node → `$json.query.issue_number`
+  - `fetch_comments` (`8vGd2e5vuyAi0u0V`): URL + Code node → `$json.query.issue_number`
+  - `issue_pr_linker` (`wzKasDRdfp8VgUI7`): URL + Code node → `$json.query.issue_number`
+  - `code_scout` (`hnt00MJVcSNedoZf`): URL + Code node → `$json.query.search_query`
+
+**Rule**: Any new sub-workflow called by toolWorkflow v2.2 with `defineBelow` + `passthrough`
+trigger must access inputs via `$json.query.<field_name>`.
 
 ### 9. code_scout requires authentication (NOT fixable without PAT)
 
 **Symptom**: GitHub `/search/code` API returns 401 without auth
 **Cause**: Unlike other GitHub endpoints, code search REQUIRES authentication.
-**Status**: `.query.` bug fixed + User-Agent added, but will return 401 until PAT is regenerated.
+**Status**: `.query.` path fixed + User-Agent added, but will return 401 until PAT is regenerated.
 **Workaround for demo**: Don't use `code_scout` tool, or regenerate PAT first.
 
 ---
