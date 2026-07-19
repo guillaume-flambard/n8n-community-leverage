@@ -215,16 +215,62 @@ To restore auth (more reliable for demo):
   - `sessionId`: `{{ $json.body.sessionId || 'webhook-' + $now.toMillis() }}`
   - `action`: `"sendMessage"`
 
+### 6. Schema type mismatch on fetch_comments and issue_pr_linker
+
+**Symptom**: "Invalid input for issue_number" (same as bug #1 but on other tools)
+**Cause**: Caller schema had `type: "number"` + `$fromAI(..., 'number')`
+**Fix**: Changed both to `type: "string"` + `$fromAI(..., 'string')` in copilot workflow.
+
+### 7. Sub-workflows using expired GitHub credential
+
+**Symptom**: `fetch_comments` returns 404, `issue_pr_linker` returns 404
+**Cause**: Same expired PAT as bug #2, but in different sub-workflows
+**Fix**: Switched both to `authentication: "none"` + `User-Agent: n8n-leverage` header.
+  - `fetch_comments` (`8vGd2e5vuyAi0u0V`): GitHub comments node
+  - `issue_pr_linker` (`wzKasDRdfp8VgUI7`): Search linked PRs node
+
+### 8. Sub-workflows accessing wrong JSON path (`$json.query.xxx`)
+
+**Symptom**: Tools return "Provide a GitHub issue number" even when one is passed
+**Cause**: `issue_pr_linker` and `code_scout` Code nodes accessed `$json.query.issue_number`
+  instead of `$json.issue_number`. The `query` wrapper doesn't exist — toolWorkflow v2.2 with
+  `defineBelow` sends fields directly to `passthrough` triggers.
+**Fix**: Removed `.query.` prefix in URL expressions and Code node jsCode for both workflows.
+
+### 9. code_scout requires authentication (NOT fixable without PAT)
+
+**Symptom**: GitHub `/search/code` API returns 401 without auth
+**Cause**: Unlike other GitHub endpoints, code search REQUIRES authentication.
+**Status**: `.query.` bug fixed + User-Agent added, but will return 401 until PAT is regenerated.
+**Workaround for demo**: Don't use `code_scout` tool, or regenerate PAT first.
+
+---
+
+## Tool status (current)
+
+| Tool | Status | Notes |
+|------|--------|-------|
+| issue_search | OK | Vector store (in-memory), no GitHub dependency |
+| top_ranking | OK | Data Table, no GitHub dependency |
+| top_prs | OK | Data Table, no GitHub dependency |
+| fetch_comments | OK | Unauthenticated, 60 req/hour |
+| issue_deep_dive | OK | Unauthenticated + Ollama synthesis |
+| issue_pr_linker | OK | Unauthenticated search API |
+| code_scout | BROKEN | Needs valid PAT (GitHub code search requires auth) |
+
 ---
 
 ## Demo checklist (day of interview)
 
 - [ ] Add OpenRouter credits ($5)
 - [ ] Switch copilot + deep dive back to OpenRouter (see above)
+- [ ] Regenerate GitHub PAT (fixes code_scout + higher rate limits)
 - [ ] Run bootstrap workflow (vector store reload) if VPS was restarted
 - [ ] Test from editor Chat panel: "Why is #14361 ranked first?"
 - [ ] Test deep dive: "Deep dive #14361"
+- [ ] Test fetch_comments: "Show comments on #14361"
 - [ ] Verify response time < 10 seconds
+- [ ] Avoid using code_scout if PAT not regenerated
 
 ---
 
