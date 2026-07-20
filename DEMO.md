@@ -4,12 +4,12 @@
 
 > I don't just prioritize n8n's backlog — I turn it into contributions.
 >
-> I built a leverage scorer across 427 open issues, clustered them into 139 themes,
-> and found the top pain is **AI Agent / tool / memory** — right in n8n's mission.
+> I built a leverage scorer across 46 open issues and community PRs,
+> running daily as n8n workflows on my VPS. The **chat copilot** runs on
+> Groq (free tier), reads DataTables live, and answers in natural language
+> via Discord — deep dives, comparisons, rankings, all in 3 seconds.
 >
-> It runs daily as an n8n workflow on my VPS: GitHub node → leverage formula → Data Tables
-> (issues + community PRs). The **chat copilot** reads comment threads, synthesizes maintainer
-> signals, and proposes contributor scope — plus a real [PR #33785](https://github.com/n8n-io/n8n/pull/33785).
+> Plus a real [PR #33785](https://github.com/n8n-io/n8n/pull/33785).
 
 ---
 
@@ -17,49 +17,93 @@
 
 ### Acte 1 — Preuve prod (30 sec)
 
-1. Ouvrir https://n8n.phangan.ai (ou tunnel SSH)
-2. **Data tables** → `leverage_ranking` et `leverage_prs`
+1. Ouvrir https://n8n.phangan.ai
+2. **Data Tables** → `leverage_ranking` (46 issues) et `leverage_prs`
 3. Montrer #14361 en tête, colonne `leverage`, `scoredAt` d'aujourd'hui
 4. Phrase : *"Ça tourne tous les matins à 8h, issues et PRs community, sans intervention."*
 
-### Acte 2 — Chat Copilot (2 min)
+### Acte 2 — Discord live (2 min)
 
-1. Workflow **Leverage Copilot — ask the backlog** → onglet **Chat**
-2. *"Why is #14361 ranked first?"* → `top_ranking` + contexte
-3. *"What MCP issues hurt most right now?"* → `issue_search`
-4. **Acte 2 bis — deep dive** : *"Deep dive #14361 — what are maintainers saying and what would you contribute?"*
-   → `issue_deep_dive` (lit les commentaires, synthèse + proposition de scope)
-5. Optionnel : *"Find PRs linked to #14361"* → `issue_pr_linker`
-6. Phrase : *"Un agent, sept tools — vector search, ranking live, commentaires GitHub, deep-dive LLM."*
+> **Démo en ANGLAIS.** n8n est une boîte internationale, l'entretien se fera en anglais.
+> Le copilot répond en anglais par défaut et bascule en français seulement si la question
+> est clairement française. Tape tes questions en anglais.
 
-> ⚠️ **Le vector store est vidé à CHAQUE restart du processus n8n** (`vectorStoreInMemory` =
-> singleton en mémoire, zéro persistance disque). Après tout restart : exécuter une fois
-> **Leverage — index bootstrap (run once)** (~4-5 min, 427 docs issues + PRs).
-> Le schedule quotidien 04:00 le refait seul, mais un restart après 04:00 revide tout.
-> **Avant la démo : lancer le bootstrap à la main et attendre la fin.**
+1. Ouvrir Discord **#copilot**
+2. Taper en live : *"what are the 5 most critical issues?"*
+   → réponse en ~3s, classement avec scores leverage, titres d'issues en anglais
+3. *"any PRs related to the AI Agent?"*
+   → le LLM filtre et analyse les données en contexte
+4. **Deep dive** : *"deep dive #14361"*
+   → 4 sections : what the signal says, product area, questions to investigate, likely effort
+5. Phrase : *"Natural language, English or French, live backlog data, three seconds."*
+
+> **Si tu veux montrer le bilingue** (10s) : repose la même question en français, le bot
+> suit. Attention, sur le chemin français il retraduit les titres d'issues et perd parfois
+> les scores `lev=`. À montrer seulement si tu as le temps, jamais comme démo principale.
+
+> **Timing** : espacer ~15-20s entre les questions (Groq free tier = 6000 TPM).
+> Si rate limit, le bot affiche "⏳ reessaie dans 10s" (pas de crash).
+
+> **Bonus si tu veux marquer un point (30s).** Tape une issue hors classement, par exemple
+> *"deep dive #14362"*. Le copilot refuse proprement, explique que le classement ne couvre
+> que les issues rescorées chaque matin, et propose les 3 mieux classées à la place.
 >
-> > **Auth du copilot :** le nœud `Check Auth` (qui portait `LEVERAGE_COPILOT_SECRET`) a été
-> > retiré le 2026-07-11. Le chat n'est PAS public (`public: false` → 404 en production), donc
-> > accessible uniquement via l'onglet Chat de l'éditeur. Ne pas passer `public: true` sans
-> > remettre une auth : agent LLM + 7 tools GitHub exposés sans gate.
+> Phrase : *"Il connaît sa frontière. Il ne fabrique pas une analyse quand il n'a pas la
+> donnée, il te redirige vers ce qu'il sait."*
 >
-> **Setup du fichier de bootstrap :**
-> ```bash
-> # Le workflow lit /home/node/.n8n-files/ — PAS /home/node/.n8n/ (chemin restreint par n8n).
-> docker cp data/vector_documents.json n8n:/home/node/.n8n-files/leverage_docs.json
-> ```
-> ⚠️ `/home/node/.n8n-files/` n'est **pas** un volume : il vit dans le filesystem du container et
-> meurt à chaque `docker rm`/recreate. Copie de secours persistante : `/root/n8n-files/` sur l'hôte.
-> Fix durable (après le 22/07) : bind-mount `/root/n8n-files:/home/node/.n8n-files`.
+> C'est plus convaincant qu'une réponse réussie de plus, parce que c'est le comportement
+> qu'on n'obtient jamais par accident.
+
+> **Cadrage du deep dive.** Le copilot lit le classement, pas le corps de l'issue ni les
+> commentaires. Le prompt lui interdit d'inventer une cause technique, et la réponse se
+> termine par *"Analyse basée sur le signal du backlog, pas sur le contenu de l'issue."*
+>
+> Assume-le à voix haute, c'est un argument et pas une excuse :
+> *"Il propose où creuser à partir du signal. Il ne prétend pas avoir lu l'issue. Je préfère
+> un outil qui dit ce qu'il ignore, sinon je ne peux pas lui faire confiance sur le reste."*
+>
+> Ne t'appuie pas sur la ligne `idleDays` : le modèle interprète parfois 4 jours comme
+> "relativement ancienne", ce qui est faux.
+
+> **Si on te demande pourquoi le workflow copilot contient des nœuds désactivés.**
+> C'est l'architecture précédente : un AI Agent LangChain avec 7 tools. Les définitions de
+> tools consommaient à elles seules plus de 5000 tokens, contre une limite Groq de 6000 par
+> minute. Remplacé par une injection directe des données dans le prompt, ~1700 tokens par
+> requête. Désactivés plutôt que supprimés pour garder la comparaison. C'est une bonne
+> histoire à raconter, pas quelque chose à cacher.
 
 ### Acte 3 — Contribution code (1 min)
 
 1. [PR #33785](https://github.com/n8n-io/n8n/pull/33785) — MCP headers
 2. Phrase : *"Le copilot propose le scope ; quand je suis convaincu, j'ouvre une PR avec tests."*
 
-### Questions de secours si le chat est lent
+### Questions de secours si rate limit
 
 Réponses pré-écrites depuis [BRIEFS.md](BRIEFS.md) thème **agent / tool / memory**.
+
+---
+
+## Architecture (ce qui tourne)
+
+```
+Discord #copilot
+  |  (poll 8s)
+  v
+Relay (xjeeK7tbTK9yAAY9) → filtre bot/seed → update lastMessageId
+  |
+  v  POST /webhook/leverage-copilot
+Copilot (XtV6NerjQnYPtXgz)
+  Webhook → Map Input → Read Ranking + Read PRs (DataTables)
+                       → Router (prompt builder, deep dive detect)
+                       → Groq Chat (llama-3.1-8b-instant, free tier)
+                       → Format Response → webhook reply
+  |
+  v
+Relay → bot.reply() dans Discord
+```
+
+Zero vector store. Zero Ollama. Zero outils LangChain.
+Données lues depuis DataTables (persistant), LLM via Groq free tier.
 
 ---
 
@@ -68,13 +112,11 @@ Réponses pré-écrites depuis [BRIEFS.md](BRIEFS.md) thème **agent / tool / me
 | Sec | Visuel | Voix off |
 |-----|--------|----------|
 | 0–10 | Data Tables `leverage_ranking` + `leverage_prs`, #14361 | "Every morning, issues and community PRs get re-scored by leverage." |
-| 10–25 | Workflow canvas ranking (Schedule → GitHub → Code → Data Table) | "Native GitHub node, my formula, upsert top 25 + top 15 PRs." |
-| 25–45 | Chat — "What MCP issues hurt most?" | "Semantic search on 442 indexed items plus live ranking." |
-| 45–65 | Chat — "Deep dive #14361" | "It reads the thread, summarizes maintainer signals, proposes a fix scope." |
+| 10–25 | Workflow canvas ranking (Schedule → GitHub → Code → Data Table) | "Native GitHub node, my formula, upsert to DataTables." |
+| 25–45 | Discord — "quelles sont les 5 issues les plus critiques ?" | "Natural language, French or English, 3 seconds via Groq." |
+| 45–65 | Discord — "deep dive #14361" | "Structured analysis: impact, risks, contribution strategy." |
 | 65–80 | PR #33785 diff (headers in McpTrigger) | "And I contribute upstream — MCP headers, tests green." |
 | 80–90 | Logo / lien repo | "Repo + workflows in description." |
-
-**Enregistrement :** Loom ou QuickTime screen capture. Pas besoin de face cam.
 
 ---
 
@@ -85,27 +127,21 @@ Réponses pré-écrites depuis [BRIEFS.md](BRIEFS.md) thème **agent / tool / me
 | Repo leverage | https://github.com/guillaume-flambard/n8n-community-leverage |
 | CI pipeline | https://github.com/guillaume-flambard/n8n-community-leverage/actions |
 | PR n8n | https://github.com/n8n-io/n8n/pull/33785 |
-| n8n instance | https://n8n.phangan.ai (chat copilot si accès donné) |
+| n8n instance | https://n8n.phangan.ai |
 
 ---
 
 ## Workflows n8n (IDs prod)
 
-| Workflow | ID | Rôle |
-|----------|-----|------|
-| Community Leverage — ranking | `LvgRank0000000001` | Daily top-25 issues + top-15 PRs |
-| Leverage Copilot | `XtV6NerjQnYPtXgz` | Chat + 7 tools |
-| Index bootstrap | `KOJmzKxRR0T3l6eF` | Re-index 442 docs après restart |
-| Ranking tool | `s2bX3oDLRPUamt0M` | Sub-workflow top issues |
-| PR ranking tool | `ErItT8BHutyTa0rf` | Sub-workflow top PRs |
-| Fetch comments | `8vGd2e5vuyAi0u0V` | Thread GitHub on-demand |
-| Issue deep dive | `KjC9Bq8HnsxwyRpg` | Synthèse + proposition contributeur |
-| Issue PR linker | `wzKasDRdfp8VgUI7` | PRs liées à une issue |
-| Code scout | `hnt00MJVcSNedoZf` | Recherche chemins dans le repo (read-only) |
-| Error handler | `G8zsc6ebrw5ZZBiz` | Discord alerts |
+| Workflow | ID | Rôle | Statut |
+|----------|----|------|--------|
+| Leverage Copilot — ask the backlog | `XtV6NerjQnYPtXgz` | LLM chat + deep dive | ACTIF |
+| Leverage — Discord copilot relay | `xjeeK7tbTK9yAAY9` | Poll Discord → webhook → reply | ACTIF |
+| Community Leverage — ranking | schedule daily | Daily scoring issues + PRs → DataTables | ACTIF |
+| Leverage — issue deep dive tool | `KjC9Bq8HnsxwyRpg` | Sub-workflow (déconnecté, remplacé par prompt LLM) | INACTIF |
 
 ---
 
 ## Phrase pitch mise à jour
 
-> *"Le copilot ne cherche pas juste des issues — il lit les threads, synthétise ce que la communauté et les maintainers disent, et propose un scope de contribution. Et quand je suis convaincu, j'ouvre une PR — comme #33785."*
+> *"Le copilot lit le backlog en temps réel — 46 issues et PRs scorées par leverage, réponses en 3 secondes dans Discord, en langage naturel. Deep dives, comparaisons, classements. Et quand le scope est clair, j'ouvre une PR — comme #33785."*
