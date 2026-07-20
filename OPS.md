@@ -221,12 +221,19 @@ NEVER use `docker compose up` — would break the instance.
 `workflows/leverage-copilot-workflow.json` est un export manuel. Il ne se met pas à jour
 tout seul quand le workflow change sur `n8n.phangan.ai`.
 
-**Périmé depuis les correctifs du 2026-07-20** (langue anglaise par défaut, regex deep dive
-élargi, refus hors classement, disclaimer ajouté dans Format Response).
+**À jour au 2026-07-20** (langue anglaise par défaut, regex deep dive élargi, refus hors
+classement, disclaimer ajouté dans Format Response).
 
 Pour le régénérer : ouvrir le workflow dans l'UI n8n, menu `...` en haut à droite,
 `Download`, puis remplacer le fichier et ne garder que les clés `id`, `name`, `nodes`,
 `connections`, `settings`.
+
+En ligne de commande, l'API REST derrière le proxy rejette les requêtes sans User-Agent
+navigateur (403). Il faut envoyer `X-N8N-API-KEY` **et** un User-Agent classique.
+
+L'export ne contient aucun secret : les nœuds utilisent `predefinedCredentialType`, donc
+seules les références de credentials sortent, jamais les clés. Revérifier après chaque
+ajout de nœud HTTP Request qui porterait un token en dur dans les headers.
 
 À faire avant d'envoyer le lien du repo à un recruteur : le repo est un artefact de
 candidature, il doit refléter ce que la démo montre.

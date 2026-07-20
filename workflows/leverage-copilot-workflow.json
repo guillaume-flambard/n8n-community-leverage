@@ -1,11 +1,11 @@
 {
   "id": "XtV6NerjQnYPtXgz",
-  "name": "Leverage Copilot \u2014 ask the backlog",
+  "name": "Leverage Copilot — ask the backlog",
   "nodes": [
     {
       "parameters": {
-        "content": "## Leverage Copilot\n\nChat with the **live n8n backlog**. Vector search (issues + PRs) + ranking tables + **comment deep-dive**.\n\n**Front door:** `POST /webhook/copilot` with `{ message, user }`. Fronted by Discord **#copilot** via a thin relay bot (`bot/`).\n\n**Auth:** Set `LEVERAGE_COPILOT_SECRET` env var and pass as `x-leverage-secret` header. Unset = open access (dev only).\n\n**Demo:**\n- Why is #14361 ranked first?\n- Deep dive #14361 \u2014 what are maintainers saying?\n- What MCP issues hurt most?\n- code_scout: McpTrigger",
-        "height": 260,
+        "content": "## Leverage Copilot\n\nChat with the **live n8n backlog**. Vector search (issues + PRs) + ranking tables + **comment deep-dive**.\n\n**Demo:**\n- Why is #14361 ranked first?\n- Deep dive #14361 — what are maintainers saying?\n- What MCP issues hurt most?\n- code_scout: McpTrigger",
+        "height": 340,
         "width": 480,
         "color": 4
       },
@@ -14,46 +14,29 @@
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        340,
-        -300
+        1216,
+        224
       ]
     },
     {
       "parameters": {
-        "httpMethod": "POST",
-        "path": "copilot",
-        "responseMode": "responseNode",
         "options": {}
       },
       "id": "3ebf2174-1c9e-48c2-81ac-ca39b6e895b5",
-      "name": "Webhook",
-      "type": "n8n-nodes-base.webhook",
-      "typeVersion": 2,
+      "name": "Chat Trigger",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
       "position": [
         0,
-        0
+        -208
       ],
       "webhookId": "af0e64c2-598e-45f2-b430-318285d3b4e4"
     },
     {
       "parameters": {
-        "jsCode": "const secret = $env.LEVERAGE_COPILOT_SECRET;\nif (secret) {\n  const header = $json.headers?.['x-leverage-secret'] ?? '';\n  if (header !== secret) throw new Error('Unauthorized: missing or invalid x-leverage-secret header');\n}\nreturn $json;"
-      },
-      "id": "check-auth-0000-0000-000000000000",
-      "name": "Check Auth",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        140,
-        0
-      ]
-    },
-    {
-      "parameters": {
-        "promptType": "define",
-        "text": "={{ $json.body.message }}",
+        "agent": "toolsAgent",
         "options": {
-          "systemMessage": "You are the n8n Community Leverage Copilot \u2014 an assistant for maintainers and contributors triaging the n8n-io/n8n open backlog.\n\nYou have tools:\n1. **issue_search** \u2014 semantic search across ~440 open issues + top community PRs.\n2. **top_ranking** \u2014 live top-25 issues by leverage (daily 08:00 Europe/Paris).\n3. **top_prs** \u2014 top community PRs to review first.\n4. **fetch_comments** \u2014 read the comment thread on a specific issue (pass issue number).\n5. **issue_deep_dive** \u2014 synthesize thread + propose contributor approach (pass issue number).\n6. **issue_pr_linker** \u2014 find open PRs mentioning an issue (pass issue number).\n7. **code_scout** \u2014 search n8n-io/n8n codebase for file paths (read-only, pass search terms).\n\nWhen answering:\n- Cite GitHub issue/PR numbers and URLs (/issues/ vs /pull/).\n- Mention leverage when relevant.\n- For contributor questions, use issue_deep_dive on the top issue.\n- Top pain theme: **AI Agent / tool / memory** (e.g. #14361).\n- Be concise. Bullet points for lists.\n\nIf vector index was cleared, tell user to run \"Leverage \u2014 index bootstrap\" once."
+          "systemMessage": "You are the n8n Community Leverage Copilot.\n\nTools: issue_search (semantic search), top_ranking (top issues by leverage), top_prs (community PRs to review), issue_deep_dive (synthesize + propose approach).\n\nCite issue/PR numbers with URLs. Mention leverage scores. Be concise, use bullet points."
         }
       },
       "id": "9481c168-137c-419b-aa6f-975f7ada481d",
@@ -61,62 +44,39 @@
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 1.3,
       "position": [
-        280,
-        0
+        832,
+        -208
       ]
     },
     {
       "parameters": {
-        "sessionKey": "={{ $json.body.user || 'discord' }}",
-        "contextWindowLength": 8
+        "contextWindowLength": 1
       },
       "id": "0d424227-faa4-4f63-b386-30bc0244da60",
       "name": "Simple Memory",
       "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
       "typeVersion": 1.3,
       "position": [
-        280,
-        200
-      ]
-    },
-    {
-      "parameters": {
-        "model": "llama3.2:3b",
-        "options": {
-          "temperature": 0.2
-        }
-      },
-      "id": "5db8b2c2-c768-422e-8bd7-7c79f5b556b5",
-      "name": "Ollama Chat Model",
-      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
-      "typeVersion": 1,
-      "position": [
-        80,
-        200
+        160,
+        -80
       ],
-      "credentials": {
-        "ollamaApi": {
-          "id": "",
-          "name": "Ollama (docker bridge)"
-        }
-      }
+      "disabled": true
     },
     {
       "parameters": {
-        "model": "nomic-embed-text:latest",
-        "options": {}
+        "model": "nomic-embed-text:latest"
       },
       "id": "9c868e4c-82f0-4d8a-ad27-d409d6ebecda",
       "name": "Embeddings Ollama",
       "type": "@n8n/n8n-nodes-langchain.embeddingsOllama",
       "typeVersion": 1,
       "position": [
-        760,
-        320
+        560,
+        224
       ],
       "credentials": {
         "ollamaApi": {
-          "id": "",
+          "id": "vusS7V4DCAGU85B6",
           "name": "Ollama (docker bridge)"
         }
       }
@@ -138,14 +98,13 @@
       "type": "@n8n/n8n-nodes-langchain.vectorStoreInMemory",
       "typeVersion": 1.2,
       "position": [
-        760,
-        120
+        480,
+        48
       ]
     },
     {
       "parameters": {
         "description": "Get top-25 issues by leverage score.",
-        "source": "database",
         "workflowId": {
           "__rl": true,
           "mode": "id",
@@ -157,18 +116,25 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2.2,
       "position": [
-        520,
-        -200
+        768,
+        16
       ]
     },
     {
       "parameters": {
         "description": "Get top community PRs to review first.",
-        "source": "database",
         "workflowId": {
           "__rl": true,
           "mode": "id",
           "value": "ErItT8BHutyTa0rf"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
         }
       },
       "id": "e7913b6e-3a71-4205-9b44-c1f091dd438e",
@@ -176,14 +142,13 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2.2,
       "position": [
-        520,
-        -120
+        896,
+        16
       ]
     },
     {
       "parameters": {
         "description": "Fetch the comment thread for a GitHub issue number.",
-        "source": "database",
         "workflowId": {
           "__rl": true,
           "mode": "id",
@@ -192,7 +157,7 @@
         "workflowInputs": {
           "mappingMode": "defineBelow",
           "value": {
-            "issue_number": "={ $fromAI('issue_number', 'GitHub issue number, e.g. 14361', 'number') }"
+            "issue_number": "={ $fromAI('issue_number', 'GitHub issue number, e.g. 14361', 'string') }"
           },
           "matchingColumns": [],
           "schema": [
@@ -203,7 +168,7 @@
               "defaultMatch": false,
               "display": true,
               "canBeUsedToMatch": true,
-              "type": "number"
+              "type": "string"
             }
           ]
         }
@@ -213,14 +178,14 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2.2,
       "position": [
-        520,
-        -40
-      ]
+        1024,
+        16
+      ],
+      "disabled": true
     },
     {
       "parameters": {
         "description": "Deep dive: summarize issue thread and propose contributor approach.",
-        "source": "database",
         "workflowId": {
           "__rl": true,
           "mode": "id",
@@ -229,7 +194,7 @@
         "workflowInputs": {
           "mappingMode": "defineBelow",
           "value": {
-            "issue_number": "={ $fromAI('issue_number', 'GitHub issue number to analyze', 'number') }"
+            "issue_number": "={ $fromAI('issue_number', 'GitHub issue number to analyze', 'string') }"
           },
           "matchingColumns": [],
           "schema": [
@@ -240,7 +205,7 @@
               "defaultMatch": false,
               "display": true,
               "canBeUsedToMatch": true,
-              "type": "number"
+              "type": "string"
             }
           ]
         }
@@ -250,14 +215,13 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2.2,
       "position": [
-        520,
-        40
+        1152,
+        16
       ]
     },
     {
       "parameters": {
         "description": "Find open PRs that mention or link to an issue number.",
-        "source": "database",
         "workflowId": {
           "__rl": true,
           "mode": "id",
@@ -266,7 +230,7 @@
         "workflowInputs": {
           "mappingMode": "defineBelow",
           "value": {
-            "issue_number": "={ $fromAI('issue_number', 'GitHub issue number to find linked PRs', 'number') }"
+            "issue_number": "={ $fromAI('issue_number', 'GitHub issue number to find linked PRs', 'string') }"
           },
           "matchingColumns": [],
           "schema": [
@@ -277,7 +241,7 @@
               "defaultMatch": false,
               "display": true,
               "canBeUsedToMatch": true,
-              "type": "number"
+              "type": "string"
             }
           ]
         }
@@ -287,14 +251,14 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2.2,
       "position": [
-        520,
-        120
-      ]
+        1280,
+        16
+      ],
+      "disabled": true
     },
     {
       "parameters": {
         "description": "Search n8n-io/n8n codebase for file paths (read-only).",
-        "source": "database",
         "workflowId": {
           "__rl": true,
           "mode": "id",
@@ -324,50 +288,195 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2.2,
       "position": [
-        520,
-        200
-      ]
+        1408,
+        16
+      ],
+      "disabled": true
     },
     {
+      "id": "c7549966-e658-4c80-99ca-589a026661aa",
+      "name": "OpenRouter Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        112,
+        112
+      ],
       "parameters": {
-        "respondWith": "text",
-        "responseBody": "={{ $json.output }}",
+        "model": {
+          "__rl": true,
+          "value": "llama-3.1-8b-instant",
+          "mode": "list"
+        },
         "options": {}
       },
-      "id": "respond-webhook-0000-0000-000000000000",
-      "name": "Respond to Webhook",
-      "type": "n8n-nodes-base.respondToWebhook",
+      "credentials": {
+        "openAiApi": {
+          "id": "WScor4TELbr5bEwC",
+          "name": "Groq (free tier)"
+        }
+      }
+    },
+    {
+      "id": "ed54a1cd-87a7-40a5-a9cf-d862c5cc4a68",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        -400
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "leverage-copilot",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "webhookId": "c7a3137a-8964-4aaf-a3f3-d775086dd827"
+    },
+    {
+      "id": "62a15766-d0c6-4bf2-a06f-3a9b58853597",
+      "name": "Map Input",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        -400
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "chatInput",
+              "name": "chatInput",
+              "value": "={{ $json.body.chatInput || $json.chatInput }}",
+              "type": "string"
+            },
+            {
+              "id": "sessionId",
+              "name": "sessionId",
+              "value": "={{ $json.body.sessionId || 'webhook-' + $now.toMillis() }}",
+              "type": "string"
+            },
+            {
+              "id": "action",
+              "name": "action",
+              "value": "sendMessage",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "520d36a9-30ea-4d7f-bdf5-7f9a9007352b",
+      "name": "Read Ranking",
+      "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        520,
-        360
-      ]
+        440,
+        -400
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "DCl7YFpc6jt8BUoV"
+        }
+      }
+    },
+    {
+      "id": "a2cbf583-7e83-4e14-a39e-aa1dc0d671f7",
+      "name": "Read PRs",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        660,
+        -400
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "oDeIzAGk6lMrJeY4"
+        }
+      }
+    },
+    {
+      "id": "13707a55-c718-4dbd-95fb-72d0610f5085",
+      "name": "Router",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        -400
+      ],
+      "parameters": {
+        "jsCode": "const query = $('Map Input').first().json.chatInput;\nconst ranking = $('Read Ranking').all().map(i => i.json);\nconst prsRaw = $('Read PRs').all().map(i => i.json);\nconst seen = new Set();\nconst prs = prsRaw.filter(p => { if (seen.has(p.number)) return false; seen.add(p.number); return true; });\n\nranking.sort((a, b) => (b.leverage || 0) - (a.leverage || 0));\nprs.sort((a, b) => (b.leverage || 0) - (a.leverage || 0));\n\nconst topIssues = ranking.filter(r => r.kind === 'issue').slice(0, 10);\nconst topPRs = prs.slice(0, 10);\n\nconst issueLines = topIssues.map(r => `#${r.number} lev=${r.leverage} reactions=${r.reactions} comments=${r.comments} \"${r.title}\"`).join('\\n');\nconst prLines = topPRs.map(p => `#${p.number} lev=${p.leverage} comments=${p.comments} @${p.author} \"${p.title}\"`).join('\\n');\n\nconst systemPrompt = `You are the Leverage Copilot for the n8n project. You help analyse the community backlog. LANGUAGE: answer in English by default. Switch to French only if the user's question is clearly written in French. Keep it concise, max 250 words. Use the data below.\n\nTOP ISSUES (by leverage score):\n${issueLines}\n\nTOP COMMUNITY PRs:\n${prLines}\n\nAlways keep the term \\\"leverage\\\" in English, never translate it. Keep issue titles in their original language, never translate them.\\n\\nFor a ranking, use bullet points. If the question is not about the n8n backlog, say so politely.`;\n\nconst deepDiveMatch = query.match(/deep\\s*dive\\s*(?:on|into|about|for|sur|de|du)?\\s*(?:the\\s*)?(?:issue\\s*)?#?(\\d+)/i) || query.match(/analyse\\s+(?:approfondie|detaillee)\\s+(?:de\\s+)?(?:l'?issue\\s*)?#?(\\d+)/i) || query.match(/plonge\\s+(?:dans|sur)\\s+#?(\\d+)/i) || query.match(/(?:dis[- ]?moi|explique|detail).*#(\\d+)/i);\nif (deepDiveMatch) {\n  const issueNum = parseInt(deepDiveMatch[1] || deepDiveMatch[2]);\n  const issue = ranking.find(r => r.number === issueNum);\n  const issueCtx = issue ? `#${issue.number} \"${issue.title}\" — leverage=${issue.leverage}, reactions=${issue.reactions}, comments=${issue.comments}, kind=${issue.kind}, idleDays=${issue.idleDays || 0}` : null;\n  if (!issue) {\n    const top3 = topIssues.slice(0, 3).map(r => `#${r.number} (lev=${r.leverage}) \"${r.title}\"`).join('\\n');\n    const missPrompt = `You are the Leverage Copilot. The user asked for a deep dive on issue #${issueNum}, but it is NOT in the tracked ranking.\\n\\nLANGUAGE: answer in English by default, French only if the question is clearly French. Max 4 lines, no markdown headings, no numbered lists:\\n- Say that #${issueNum} is not in the tracked ranking, so you cannot analyse it.\\n- Add one sentence explaining the ranking covers open issues from the n8n repo, rescored every morning by leverage.\\n- Offer these 3 issues as alternatives, one per line, exact format: #NUM (lev=X) \"title\".\\n\\nTOP 3:\\n${top3}\\n\\nInvent absolutely nothing about #${issueNum}. You have neither its title, nor its metrics, nor its content. Never speculate about whether it exists.`;\n    return [{ json: { systemPrompt: missPrompt, userMessage: query } }];\n  }\n  const deepPrompt = `You are the Leverage Copilot. The user asked for a deep dive on issue ${issueCtx}.\\n\\nHARD CONSTRAINT: you only have the title and the metrics above. You have NOT read the issue body or its comments. Never invent the technical cause, the observed behaviour, or what the discussion says. If something cannot be inferred from the title or the metrics, say plainly that you do not have it.\\n\\nLANGUAGE: answer in English by default, section headings and closing line included. Switch to French only if the question is clearly written in French. Max 200 words. Each section heading starts with ### on its own line. NEVER use === or --- underlines (they do not render in Discord). No filler sentences.\\n\\nUse EXACTLY these four headings and nothing else. Never append the instruction text to a heading.\\n\\n### 1. What the signal says\\nWhy this leverage score, from reactions, comments and idle time, and what it says about community demand.\\n\\n### 2. Product area\\nInferred from the title alone. Component level, never implementation.\\n\\n### 3. Questions to investigate\\nThe 3 precise questions a contributor should answer by reading the issue and its comments. ALWAYS produce these. They are questions to ask, not facts you need to already know, so not having read the issue is exactly why they matter. Never skip or refuse this section.\\n\\n### 4. Likely effort\\nA numeric range such as 1-3 days, plus ONE sentence on what it depends on. No paragraph.\\n\\nMANDATORY FINAL LINE. After section 4, always output this line on its own line, verbatim. Never omit it, it is the most important part of the answer. Match your answer's language. English: \\\"Based on backlog signal, not on the issue content.\\\" French: \\\"Analyse basee sur le signal du backlog, pas sur le contenu de l'issue.\\\"`;\n  return [{ json: { systemPrompt: deepPrompt, userMessage: query, mode: 'deepdive' } }];\n}\n\nreturn [{ json: { systemPrompt, userMessage: query } }];"
+      }
+    },
+    {
+      "id": "67b91c5d-a750-4383-b87c-5bd2d143ea52",
+      "name": "Groq Chat",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1100,
+        -400
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: 'llama-3.1-8b-instant', messages: [{ role: 'system', content: $json.systemPrompt }, { role: 'user', content: $json.userMessage }], max_tokens: 800, temperature: 0.3 }) }}",
+        "options": {
+          "timeout": 15000,
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "credentials": {
+        "openAiApi": {
+          "id": "WScor4TELbr5bEwC",
+          "name": "Groq (free tier)"
+        }
+      }
+    },
+    {
+      "id": "2d059229-556c-43dc-8917-bc3d2e951c9e",
+      "name": "Format Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        -400
+      ],
+      "parameters": {
+        "jsCode": "const resp = $input.first().json;\nif (resp?.error || resp?.statusCode === 429) {\n  return [{ json: { output: '⏳ Groq rate limit reached, retry in 10s.' } }];\n}\nlet output = resp?.choices?.[0]?.message?.content || 'Erreur: pas de reponse du LLM.';\nconst mode = $('Router').first().json.mode;\nconst D_EN = 'Based on backlog signal, not on the issue content.';\nconst D_FR = \"Analyse basee sur le signal du backlog, pas sur le contenu de l'issue.\";\nconst needsD = mode === 'deepdive' && !output.includes('backlog signal') && !output.includes('signal du backlog');\nconst budget = needsD ? 1870 : 1950;\nif (output.length > budget) {\n  const cut = output.lastIndexOf('\\n\\n', budget);\n  output = cut > 500 ? output.slice(0, cut) : output.slice(0, budget - 3) + '...';\n}\nif (needsD) {\n  const isFr = /\\b(les|des|dans|pour|cette|communaute|score de)\\b/i.test(output);\n  output = output.trimEnd() + '\\n\\n' + (isFr ? D_FR : D_EN);\n}\nreturn [{ json: { output } }];"
+      }
     }
   ],
   "connections": {
-    "Webhook": {
-      "main": [
-        [
-          {
-            "node": "Check Auth",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "AI Agent": {
-      "main": [
-        [
-          {
-            "node": "Respond to Webhook",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Check Auth": {
+    "Chat Trigger": {
       "main": [
         [
           {
@@ -384,17 +493,6 @@
           {
             "node": "AI Agent",
             "type": "ai_memory",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Ollama Chat Model": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "AI Agent",
-            "type": "ai_languageModel",
             "index": 0
           }
         ]
@@ -487,10 +585,97 @@
           }
         ]
       ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Map Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Map Input": {
+      "main": [
+        [
+          {
+            "node": "Read Ranking",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read PRs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Ranking": {
+      "main": [
+        [
+          {
+            "node": "Read PRs",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Router",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PRs": {
+      "main": [
+        [
+          {
+            "node": "Router",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Router": {
+      "main": [
+        [
+          {
+            "node": "Groq Chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat": {
+      "main": [
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
-    "executionOrder": "v2",
+    "executionOrder": "v1",
     "timezone": "Europe/Paris",
     "errorWorkflow": "G8zsc6ebrw5ZZBiz",
     "binaryMode": "separate"
